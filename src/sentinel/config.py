@@ -26,6 +26,7 @@ class Config:
     api_port: int = 8787
     redact_keys: Optional[list[str]] = None
     api_token: Optional[str] = None  # if set, mutating API endpoints require it
+    protect_reads: bool = False  # if true (and token set), read endpoints require it too
     mode: str = "enforce"  # "enforce" | "monitor" (observe-only)
 
     @classmethod
@@ -40,5 +41,6 @@ class Config:
             api_port=int(os.getenv("SENTINEL_API_PORT", "8787")),
             redact_keys=[k.strip() for k in keys.split(",") if k.strip()] if keys else None,
             api_token=os.getenv("SENTINEL_API_TOKEN") or None,
+            protect_reads=os.getenv("SENTINEL_API_PROTECT_READS", "").lower() in ("1", "true", "yes"),
             mode=os.getenv("SENTINEL_MODE", "enforce"),
         )

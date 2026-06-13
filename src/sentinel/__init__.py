@@ -9,6 +9,12 @@ Typical use:
     def place_order(symbol: str, amount: float): ...
 """
 
+from sentinel.approvals import Approvals
+from sentinel.audit import AuditLog, VerifyResult
+from sentinel.detector import Detector
+from sentinel.killswitch import KillSwitch
+from sentinel.mcp_proxy import MCPProxy
+from sentinel.mcp_server import SentinelMCPServer
 from sentinel.models import (
     AuditRecord,
     CheckResult,
@@ -18,14 +24,8 @@ from sentinel.models import (
     ToolCall,
 )
 from sentinel.policy import Policy, PolicyResult
-from sentinel.audit import AuditLog, VerifyResult
-from sentinel.killswitch import KillSwitch
-from sentinel.detector import Detector
-from sentinel.approvals import Approvals
 from sentinel.ratelimit import SqliteRateLimiter
-from sentinel.sentinel import Sentinel, BlockedError
-from sentinel.mcp_proxy import MCPProxy
-from sentinel.mcp_server import SentinelMCPServer
+from sentinel.sentinel import BlockedError, Sentinel
 
 __version__ = "0.1.0"
 

@@ -41,13 +41,14 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
             raise HTTPException(status_code=401, detail="missing or invalid control token")
 
     auth = [Depends(require_token)]
+    read_auth = auth if cfg.protect_reads else []
 
     @app.get("/", response_class=HTMLResponse)
     def dashboard() -> HTMLResponse:
         with open(_DASHBOARD_FILE, "r", encoding="utf-8") as fh:
             return HTMLResponse(fh.read())
 
-    @app.get("/api/status")
+    @app.get("/api/status", dependencies=read_auth)
     def status() -> dict:
         v = audit.verify()
         recs = audit.records()
@@ -61,25 +62,25 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
             "auth_required": bool(cfg.api_token),
         }
 
-    @app.get("/api/actions")
+    @app.get("/api/actions", dependencies=read_auth)
     def actions(limit: int = 100) -> list:
         recs = audit.records()[-limit:]
         return [r.__dict__ for r in reversed(recs)]
 
-    @app.get("/api/verify")
+    @app.get("/api/verify", dependencies=read_auth)
     def verify() -> dict:
         v = audit.verify()
         return {"ok": v.ok, "first_bad_seq": v.first_bad_seq, "message": v.message}
 
-    @app.get("/api/export")
+    @app.get("/api/export", dependencies=read_auth)
     def export() -> dict:
         return audit.export()
 
-    @app.get("/api/approvals")
+    @app.get("/api/approvals", dependencies=read_auth)
     def list_approvals() -> list:
         return approvals.pending()
 
-    @app.get("/api/policy")
+    @app.get("/api/policy", dependencies=read_auth)
     def get_policy() -> dict:
         try:
             with open(cfg.policy_path, "r", encoding="utf-8") as fh:

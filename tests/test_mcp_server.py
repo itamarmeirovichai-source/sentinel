@@ -5,14 +5,13 @@ wraps it in a real `mcp` Server. Core tests hit handle_call; the mcp wiring is s
 """
 import pytest
 
+from sentinel.audit import AuditLog
+from sentinel.detector import Detector
+from sentinel.killswitch import KillSwitch
+from sentinel.mcp_server import SentinelMCPServer
 from sentinel.models import Status
 from sentinel.policy import Policy
-from sentinel.audit import AuditLog
-from sentinel.killswitch import KillSwitch
-from sentinel.detector import Detector
-from sentinel.sentinel import Sentinel, BlockedError
-from sentinel.mcp_server import SentinelMCPServer
-
+from sentinel.sentinel import BlockedError, Sentinel
 
 POLICY = """
 version: 1

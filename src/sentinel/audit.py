@@ -15,9 +15,10 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from sentinel.models import ToolCall, Decision, Status, AuditRecord
-from sentinel.redaction import redact, DEFAULT_REDACT_KEYS
 from sentinel.compliance import map_compliance
+from sentinel.db import connect
+from sentinel.models import AuditRecord, Decision, Status, ToolCall
+from sentinel.redaction import DEFAULT_REDACT_KEYS, redact
 
 GENESIS = "0" * 64
 
@@ -55,9 +56,7 @@ class AuditLog:
         self._init_db()
 
     def _conn(self) -> sqlite3.Connection:
-        con = sqlite3.connect(self.db_path)
-        con.row_factory = sqlite3.Row
-        return con
+        return connect(self.db_path)
 
     def _init_db(self) -> None:
         with self._conn() as con:

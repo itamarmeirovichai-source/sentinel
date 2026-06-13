@@ -114,7 +114,7 @@ async function mutate(url, body) {
 
 async function refresh() {
   try {
-    const st = await (await fetch('/api/status')).json();
+    const st = await (await fetch('/api/status', {headers: authHeaders()})).json();
     $('s-total').textContent = st.total_actions;
     const ig = st.integrity.ok;
     $('s-integrity').innerHTML = `<span class="pill ${ig ? 'ok' : 'bad'}">${ig ? 'INTACT' : 'TAMPERED'}</span>`;
@@ -123,7 +123,7 @@ async function refresh() {
     $('s-kill').innerHTML = `<span class="pill ${killed ? 'bad' : 'ok'}">${killed ? 'ARMED' : 'CLEAR'}</span>`;
     $('killBtn').textContent = killed ? 'RELEASE KILL' : 'KILL ALL';
 
-    const rows = await (await fetch('/api/actions?limit=50')).json();
+    const rows = await (await fetch('/api/actions?limit=50', {headers: authHeaders()})).json();
     $('feed').innerHTML = rows.map(r => `
       <tr>
         <td>${r.seq}</td>
@@ -135,7 +135,7 @@ async function refresh() {
         <td class="flags">${(r.flags||[]).join('<br>')}</td>
       </tr>`).join('');
 
-    const appr = await (await fetch('/api/approvals')).json();
+    const appr = await (await fetch('/api/approvals', {headers: authHeaders()})).json();
     $('apprCount').textContent = appr.length ? `(${appr.length})` : '';
     $('approvals').innerHTML = appr.length ? appr.map(a => `
       <div class="appr">
@@ -151,7 +151,7 @@ function fmtArgs(a) {
 }
 
 async function doVerify() {
-  const v = await (await fetch('/api/verify')).json();
+  const v = await (await fetch('/api/verify', {headers: authHeaders()})).json();
   $('verifyMsg').innerHTML = v.ok
     ? '<span class="pill ok">chain verified</span>'
     : `<span class="pill bad">TAMPER at seq ${v.first_bad_seq}: ${v.message}</span>`;
@@ -168,7 +168,7 @@ async function approve(id) {
 }
 
 async function loadPolicy() {
-  const p = await (await fetch('/api/policy')).json();
+  const p = await (await fetch('/api/policy', {headers: authHeaders()})).json();
   $('policy').value = p.yaml; $('policyPath').textContent = p.path;
 }
 async function savePolicy() {

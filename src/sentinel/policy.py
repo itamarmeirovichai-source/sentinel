@@ -14,7 +14,7 @@ from typing import Any, Callable, Optional
 
 import yaml
 
-from sentinel.models import ToolCall, Decision
+from sentinel.models import Decision, ToolCall
 
 
 @dataclass

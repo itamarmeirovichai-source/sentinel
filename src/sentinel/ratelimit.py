@@ -10,6 +10,8 @@ import sqlite3
 import time
 from typing import Callable, Union
 
+from sentinel.db import connect
+
 
 class SqliteRateLimiter:
     def __init__(self, db_path: str, clock: Callable[[], float] = time.time):
@@ -21,9 +23,7 @@ class SqliteRateLimiter:
             con.execute("CREATE INDEX IF NOT EXISTS idx_rate_k ON rate_hits(k)")
 
     def _conn(self) -> sqlite3.Connection:
-        con = sqlite3.connect(self.db_path)
-        con.row_factory = sqlite3.Row
-        return con
+        return connect(self.db_path)
 
     def allow(self, key: Union[str, tuple], max_n: int, per_seconds: float) -> bool:
         now = self._clock()

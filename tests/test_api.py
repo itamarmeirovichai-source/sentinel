@@ -5,7 +5,7 @@ from sentinel.api import create_app
 from sentinel.audit import AuditLog
 from sentinel.config import Config
 from sentinel.killswitch import KillSwitch
-from sentinel.models import ToolCall, Decision, Status
+from sentinel.models import Decision, Status, ToolCall
 
 
 def make_client(tmp_path):
@@ -79,6 +79,18 @@ def test_mutations_require_token_when_configured(tmp_path):
                      headers={"Authorization": "Bearer s3cret"})
     assert ok.status_code == 200
     assert client.get("/api/status").json()["auth_required"] is True  # reads stay open
+
+
+def test_read_endpoints_protected_when_configured(tmp_path):
+    db = str(tmp_path / "api.db")
+    pol = str(tmp_path / "p.yaml")
+    with open(pol, "w", encoding="utf-8") as fh:
+        fh.write("version: 1\ndefault: deny\nrules: []\n")
+    client = TestClient(create_app(Config(db_path=db, policy_path=pol,
+                                          api_token="s3cret", protect_reads=True)))
+    assert client.get("/api/status").status_code == 401
+    assert client.get("/api/status", headers={"Authorization": "Bearer s3cret"}).status_code == 200
+    assert client.get("/").status_code == 200  # the dashboard shell itself stays open
 
 
 def test_pending_approvals_listed_and_approvable(tmp_path):

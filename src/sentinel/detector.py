@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import Optional
 
-from sentinel.models import ToolCall, Flag
+from sentinel.models import Flag, ToolCall
 
 _INJECTION_PATTERNS = [
     re.compile(r"(?i)ignore (all )?previous instructions"),

@@ -63,7 +63,8 @@ def record_spans(records: Iterable[AuditRecord], tracer) -> int:
     Requires `opentelemetry-sdk` (the `otel` extra). The caller wires up the tracer and
     exporter (OTLP to a collector, console, or in-memory). None-valued attributes are skipped.
     """
-    from opentelemetry.trace import Status as OtelStatus, StatusCode  # lazy import
+    from opentelemetry.trace import Status as OtelStatus  # lazy import
+    from opentelemetry.trace import StatusCode
 
     count = 0
     for rec in records:

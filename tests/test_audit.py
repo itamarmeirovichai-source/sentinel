@@ -4,8 +4,8 @@ This is the heart of the wedge: the log must be append-only and tamper-evident.
 """
 import sqlite3
 
-from sentinel.models import ToolCall, Decision, Status
 from sentinel.audit import AuditLog
+from sentinel.models import Decision, Status, ToolCall
 
 
 def mk(tool="get_quote", **args):

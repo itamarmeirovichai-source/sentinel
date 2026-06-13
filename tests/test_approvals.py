@@ -3,8 +3,8 @@
 Model: a `require_approval` call is held; an operator approves it; the next identical
 call is allowed exactly once. Persisted, so approval survives a restart.
 """
-from sentinel.models import ToolCall
 from sentinel.approvals import Approvals
+from sentinel.models import ToolCall
 
 
 def call(tool="place_order", **args):

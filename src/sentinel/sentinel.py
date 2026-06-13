@@ -20,7 +20,7 @@ from sentinel.approvals import Approvals
 from sentinel.audit import AuditLog
 from sentinel.detector import Detector
 from sentinel.killswitch import KillSwitch
-from sentinel.models import ToolCall, Decision, Status, CheckResult
+from sentinel.models import CheckResult, Decision, Status, ToolCall
 from sentinel.policy import Policy
 from sentinel.ratelimit import SqliteRateLimiter
 

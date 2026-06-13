@@ -10,6 +10,8 @@ import sqlite3
 import time
 from typing import Callable
 
+from sentinel.db import connect
+
 
 class KillSwitch:
     def __init__(self, db_path: str, clock: Callable[[], float] = time.time):
@@ -26,9 +28,7 @@ class KillSwitch:
             )
 
     def _conn(self) -> sqlite3.Connection:
-        con = sqlite3.connect(self.db_path)
-        con.row_factory = sqlite3.Row
-        return con
+        return connect(self.db_path)
 
     def arm(self, scope: str = "*", reason: str = "") -> None:
         with self._conn() as con:

@@ -5,14 +5,13 @@ properties: default-deny and fail-closed.
 """
 import pytest
 
-from sentinel.models import Status
 from sentinel.approvals import Approvals
-from sentinel.policy import Policy
 from sentinel.audit import AuditLog
-from sentinel.killswitch import KillSwitch
 from sentinel.detector import Detector
-from sentinel.sentinel import Sentinel, BlockedError
-
+from sentinel.killswitch import KillSwitch
+from sentinel.models import Status
+from sentinel.policy import Policy
+from sentinel.sentinel import BlockedError, Sentinel
 
 POLICY = """
 version: 1

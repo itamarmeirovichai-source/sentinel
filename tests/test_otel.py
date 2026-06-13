@@ -1,9 +1,9 @@
 """OpenTelemetry GenAI export contract."""
 import pytest
 
-from sentinel.models import ToolCall, Decision, Status
 from sentinel.audit import AuditLog
-from sentinel.otel import to_otel_spans, record_spans
+from sentinel.models import Decision, Status, ToolCall
+from sentinel.otel import record_spans, to_otel_spans
 
 
 def test_record_maps_to_genai_span(tmp_path):

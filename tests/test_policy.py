@@ -1,5 +1,5 @@
 """Policy engine contract — written before the implementation (security-critical)."""
-from sentinel.models import ToolCall, Decision
+from sentinel.models import Decision, ToolCall
 from sentinel.policy import Policy
 
 

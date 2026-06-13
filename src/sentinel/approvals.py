@@ -15,6 +15,7 @@ import time
 import uuid
 from typing import Callable
 
+from sentinel.db import connect
 from sentinel.models import ToolCall
 
 
@@ -43,9 +44,7 @@ class Approvals:
             )
 
     def _conn(self) -> sqlite3.Connection:
-        con = sqlite3.connect(self.db_path)
-        con.row_factory = sqlite3.Row
-        return con
+        return connect(self.db_path)
 
     def request(self, call: ToolCall) -> str:
         sig = signature(call)

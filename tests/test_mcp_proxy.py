@@ -6,14 +6,13 @@ the agent calls can bypass it.
 """
 import pytest
 
+from sentinel.audit import AuditLog
+from sentinel.detector import Detector
+from sentinel.killswitch import KillSwitch
+from sentinel.mcp_proxy import MCPProxy
 from sentinel.models import Status
 from sentinel.policy import Policy
-from sentinel.audit import AuditLog
-from sentinel.killswitch import KillSwitch
-from sentinel.detector import Detector
-from sentinel.sentinel import Sentinel, BlockedError
-from sentinel.mcp_proxy import MCPProxy
-
+from sentinel.sentinel import BlockedError, Sentinel
 
 POLICY = """
 version: 1

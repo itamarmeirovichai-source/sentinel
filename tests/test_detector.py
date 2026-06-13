@@ -2,8 +2,8 @@
 
 Detector flags suspicious patterns; it records, it does not block by itself.
 """
-from sentinel.models import ToolCall
 from sentinel.detector import Detector
+from sentinel.models import ToolCall
 
 
 def call(tool, sid="s1", **args):

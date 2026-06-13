@@ -47,8 +47,8 @@ class SentinelMCPServer:
 
     # --- real MCP wiring (lazy imports; optional `mcp` extra) -------------
     def build_server(self):
-        from mcp.server import Server  # noqa: PLC0415
         import mcp.types as types  # noqa: PLC0415
+        from mcp.server import Server  # noqa: PLC0415
 
         from sentinel.sentinel import BlockedError
 
