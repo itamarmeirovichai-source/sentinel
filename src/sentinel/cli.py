@@ -17,8 +17,8 @@ def main(argv=None) -> None:
     sub.add_parser("verify", help="verify the audit log integrity")
     ex = sub.add_parser("export", help="export a compliance report")
     ex.add_argument("--out", default=None, help="write the report to this file")
-    ex.add_argument("--format", choices=["json", "otel"], default="json",
-                    help="json compliance report (default) or OpenTelemetry GenAI spans")
+    ex.add_argument("--format", choices=["json", "otel", "art12"], default="json",
+                    help="json report (default), OpenTelemetry GenAI spans, or EU AI Act Art.12 report")
     kill = sub.add_parser("kill", help="arm the kill switch")
     kill.add_argument("--scope", default="*")
     kill.add_argument("--reason", default="armed via cli")
@@ -63,6 +63,16 @@ def main(argv=None) -> None:
 
             spans = to_otel_spans(log.records())
             text, count = json.dumps({"spans": spans}, indent=2, default=str), len(spans)
+        elif args.format == "art12":
+            import time as _time
+
+            from sentinel.compliance import art12_report
+
+            v = log.verify()
+            report = art12_report(log.records(), verify_ok=v.ok, generated_at=_time.time(),
+                                  system_name=os.getenv("SENTINEL_SYSTEM_NAME", "unspecified AI system"),
+                                  provider=os.getenv("SENTINEL_PROVIDER", "unspecified"))
+            text, count = json.dumps(report, indent=2, default=str), report["event_count"]
         else:
             report = log.export()
             text, count = json.dumps(report, indent=2, default=str), report["count"]
