@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 
 from sentinel import AuditLog, BlockedError, Detector, KillSwitch, Policy, Sentinel
+from sentinel.approvals import Approvals
 from sentinel.config import Config
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,6 +39,7 @@ def build_sentinel() -> Sentinel:
         audit=AuditLog(cfg.db_path, redact_keys=cfg.redact_keys),
         killswitch=KillSwitch(cfg.db_path),
         detector=detector,
+        approvals=Approvals(cfg.db_path),
         agent_id="trading-bot-1",
         session_id="demo-session",
     )
@@ -95,8 +97,13 @@ def run() -> None:
     attempt("get_balance()", get_balance)
     attempt("place_order(AAPL, $100)", place_order, "AAPL", amount=100)
 
-    print("\n[2] Oversized order (policy: > $500 needs approval)")
+    print("\n[2] Oversized order -> parked for human approval, then approved")
     attempt("place_order(TSLA, $5000)", place_order, "TSLA", amount=5000)
+    pend = s.approvals.pending()
+    if pend:
+        print(f"              operator (risk desk) approves id={pend[0]['id'][:8]}…")
+        s.approvals.approve(pend[0]["id"], by="risk-desk")
+        attempt("retry place_order(TSLA, $5000) after approval", place_order, "TSLA", amount=5000)
 
     print("\n[3] Suspicious behavior (detector flags, policy still allows)")
     attempt("read_api_secret()", read_api_secret)

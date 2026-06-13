@@ -22,16 +22,24 @@ def main(argv=None) -> None:
     kill.add_argument("--reason", default="armed via cli")
     unkill = sub.add_parser("unkill", help="disarm the kill switch")
     unkill.add_argument("--scope", default="*")
+    sub.add_parser("approvals", help="list pending human-in-the-loop approvals")
+    approve = sub.add_parser("approve", help="approve a pending action by id")
+    approve.add_argument("id")
     sub.add_parser("demo", help="run the example trading agent end-to-end")
 
     args = parser.parse_args(argv)
     cfg = Config.from_env()
 
     if args.cmd == "serve":
+        import secrets
+
         import uvicorn
 
         from sentinel.api import create_app
 
+        if not cfg.api_token:
+            cfg.api_token = secrets.token_urlsafe(24)
+            print(f"Generated control token (paste into the dashboard): {cfg.api_token}")
         print(f"Sentinel dashboard -> http://{cfg.api_host}:{cfg.api_port}")
         uvicorn.run(create_app(cfg), host=cfg.api_host, port=cfg.api_port)
 
@@ -65,6 +73,21 @@ def main(argv=None) -> None:
 
         KillSwitch(cfg.db_path).disarm(args.scope)
         print(f"kill switch DISARMED for scope '{args.scope}'")
+
+    elif args.cmd == "approvals":
+        from sentinel.approvals import Approvals
+
+        pend = Approvals(cfg.db_path).pending()
+        if not pend:
+            print("no pending approvals")
+        for p in pend:
+            print(f"{p['id']}  {p['agent_id']}  {p['tool']}({p['args']})")
+
+    elif args.cmd == "approve":
+        from sentinel.approvals import Approvals
+
+        ok = Approvals(cfg.db_path).approve(args.id, by="cli")
+        print("approved" if ok else "no such pending approval")
 
     elif args.cmd == "demo":
         path = os.path.join(os.getcwd(), "examples", "trading_agent.py")

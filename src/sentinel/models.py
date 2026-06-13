@@ -21,6 +21,7 @@ class Decision(str, Enum):
 class Status(str, Enum):
     """What actually happened to the action after the verdict."""
 
+    EXECUTING = "executing"  # intent recorded, tool about to run (two-phase)
     EXECUTED = "executed"
     BLOCKED = "blocked"
     ERROR = "error"
@@ -83,3 +84,5 @@ class AuditRecord:
     compliance: dict[str, Any]
     prev_hash: str
     hash: str = ""
+    action_id: Optional[str] = None  # links the intent + outcome records of one call
+    phase: str = "event"  # "intent" (pre-exec) | "outcome" (post-exec) | "event" (single)

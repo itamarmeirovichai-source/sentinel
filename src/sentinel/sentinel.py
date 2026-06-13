@@ -4,21 +4,25 @@ Two non-negotiable safety properties live here:
   * default-deny  — delegated to the policy engine (no match -> block)
   * fail-closed   — any exception inside check() resolves to BLOCK, never execute
 
-The SDK-wrapper interception (`guard`) is one implementation; the core `check()`
-takes a ToolCall and is interceptor-agnostic, so an MCP-proxy adapter can call the
-same path later without touching policy/audit/kill.
+Allowed calls are logged in two phases (intent before exec, outcome after), linked by
+an action_id, so a crash mid-execution still leaves a record of intent. `require_approval`
+parks the call in the approvals store; an operator approves it and the next identical
+call is allowed exactly once.
 """
 from __future__ import annotations
 
 import functools
 import inspect
+import uuid
 from typing import Callable, Optional
 
+from sentinel.approvals import Approvals
+from sentinel.audit import AuditLog
+from sentinel.detector import Detector
+from sentinel.killswitch import KillSwitch
 from sentinel.models import ToolCall, Decision, Status, CheckResult
 from sentinel.policy import Policy
-from sentinel.audit import AuditLog
-from sentinel.killswitch import KillSwitch
-from sentinel.detector import Detector
+from sentinel.ratelimit import SqliteRateLimiter
 
 
 class BlockedError(RuntimeError):
@@ -32,21 +36,28 @@ class BlockedError(RuntimeError):
 
 class Sentinel:
     def __init__(self, policy: Policy, audit: AuditLog, killswitch: KillSwitch,
-                 detector: Optional[Detector] = None,
+                 detector: Optional[Detector] = None, approvals: Optional[Approvals] = None,
                  agent_id: str = "default", session_id: str = "default"):
         self.policy = policy
         self.audit = audit
         self.killswitch = killswitch
         self.detector = detector or Detector()
+        self.approvals = approvals
         self.agent_id = agent_id
         self.session_id = session_id
 
     @classmethod
     def from_files(cls, policy: str, db: str, detector: Optional[Detector] = None,
                    agent_id: str = "default", session_id: str = "default") -> "Sentinel":
-        return cls(policy=Policy.from_file(policy), audit=AuditLog(db),
-                   killswitch=KillSwitch(db), detector=detector,
-                   agent_id=agent_id, session_id=session_id)
+        return cls(
+            policy=Policy.from_file(policy, limiter=SqliteRateLimiter(db)),
+            audit=AuditLog(db),
+            killswitch=KillSwitch(db),
+            detector=detector,
+            approvals=Approvals(db),
+            agent_id=agent_id,
+            session_id=session_id,
+        )
 
     # --- core decision ----------------------------------------------------
     def check(self, call: ToolCall) -> CheckResult:
@@ -56,7 +67,16 @@ class Sentinel:
                                    f"kill switch active for agent '{call.agent_id}'", [])
             flags = self.detector.inspect(call)
             verdict = self.policy.evaluate(call)
-            return CheckResult(verdict.decision, verdict.rule_id, verdict.reason, flags)
+            decision, rule, reason = verdict.decision, verdict.rule_id, verdict.reason
+
+            if decision == Decision.REQUIRE_APPROVAL and self.approvals is not None:
+                if self.approvals.consume(call):
+                    decision, rule, reason = Decision.ALLOW, "approved", "operator-approved (consumed)"
+                else:
+                    approval_id = self.approvals.request(call)
+                    reason = f"awaiting operator approval (id={approval_id})"
+
+            return CheckResult(decision, rule, reason, flags)
         except Exception as exc:  # fail-closed: a core error must never open the gate
             return CheckResult(Decision.BLOCK, "fail-closed", f"sentinel internal error: {exc!r}", [])
 
@@ -78,19 +98,25 @@ class Sentinel:
                             agent_id=self.agent_id, session_id=self.session_id)
             result = self.check(call)
             flags = [f.as_str() for f in result.flags]
+            action_id = uuid.uuid4().hex
 
             if result.decision == Decision.ALLOW:
+                # phase 1: record intent BEFORE the tool runs (survives a crash)
+                self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+                                  flags, Status.EXECUTING, action_id=action_id, phase="intent")
                 try:
                     out = fn(*args, **kwargs)
                 except Exception as exc:
                     self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
-                                      flags, Status.ERROR, error=repr(exc))
+                                      flags, Status.ERROR, error=repr(exc),
+                                      action_id=action_id, phase="outcome")
                     raise
+                # phase 2: record the outcome
                 self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
-                                  flags, Status.EXECUTED)
+                                  flags, Status.EXECUTED, action_id=action_id, phase="outcome")
                 return out
 
-            # Not allowed -> the tool is never invoked.
+            # Not allowed -> the tool is never invoked (single record).
             if result.rule_id == "killswitch":
                 status = Status.KILLED
             elif result.decision == Decision.REQUIRE_APPROVAL:
@@ -98,7 +124,7 @@ class Sentinel:
             else:
                 status = Status.BLOCKED
             record = self.audit.append(call, result.decision, result.rule_id, result.reason,
-                                       flags, status)
+                                       flags, status, action_id=action_id, phase="event")
             raise BlockedError(result.reason, record=record)
 
         return wrapper
@@ -111,7 +137,6 @@ class Sentinel:
                 bound.apply_defaults()
                 mapped = dict(bound.arguments)
                 mapped.pop("self", None)
-                # flatten **kwargs catch-all if present
                 for name, param in sig.parameters.items():
                     if param.kind == inspect.Parameter.VAR_KEYWORD and name in mapped:
                         extra = mapped.pop(name)

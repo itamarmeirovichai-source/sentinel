@@ -25,7 +25,8 @@ GENESIS = "0" * 64
 # canonicalization sorts keys, but we keep an explicit allow-list).
 _FIELDS = [
     "seq", "ts", "agent_id", "session_id", "tool", "args", "decision",
-    "policy_rule", "reason", "flags", "status", "error", "compliance", "prev_hash",
+    "policy_rule", "reason", "flags", "status", "error", "compliance",
+    "action_id", "phase", "prev_hash",
 ]
 
 
@@ -67,6 +68,7 @@ class AuditLog:
                     ts REAL, agent_id TEXT, session_id TEXT, tool TEXT,
                     args TEXT, decision TEXT, policy_rule TEXT, reason TEXT,
                     flags TEXT, status TEXT, error TEXT, compliance TEXT,
+                    action_id TEXT, phase TEXT,
                     prev_hash TEXT, hash TEXT
                 )
                 """
@@ -74,7 +76,8 @@ class AuditLog:
 
     def append(self, call: ToolCall, decision: Decision, policy_rule: Optional[str],
                reason: str, flags: list[str], status: Status,
-               error: Optional[str] = None) -> AuditRecord:
+               error: Optional[str] = None, action_id: Optional[str] = None,
+               phase: str = "event") -> AuditRecord:
         dec = decision if isinstance(decision, Decision) else Decision(str(decision))
         sval = status.value if isinstance(status, Status) else str(status)
         with self._conn() as con:
@@ -96,17 +99,19 @@ class AuditLog:
                 error=error,
                 compliance=map_compliance(dec, list(flags)),
                 prev_hash=prev_hash,
+                action_id=action_id,
+                phase=phase,
             )
             payload = {f: getattr(rec, f) for f in _FIELDS}
             rec.hash = _hash(prev_hash, payload)
             con.execute(
                 "INSERT INTO audit (seq,ts,agent_id,session_id,tool,args,decision,policy_rule,"
-                "reason,flags,status,error,compliance,prev_hash,hash) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "reason,flags,status,error,compliance,action_id,phase,prev_hash,hash) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (rec.seq, rec.ts, rec.agent_id, rec.session_id, rec.tool,
                  json.dumps(rec.args, default=str), rec.decision, rec.policy_rule, rec.reason,
                  json.dumps(rec.flags), rec.status, rec.error, json.dumps(rec.compliance),
-                 rec.prev_hash, rec.hash),
+                 rec.action_id, rec.phase, rec.prev_hash, rec.hash),
             )
         return rec
 
@@ -117,6 +122,7 @@ class AuditLog:
             policy_rule=row["policy_rule"], reason=row["reason"], flags=json.loads(row["flags"]),
             status=row["status"], error=row["error"], compliance=json.loads(row["compliance"]),
             prev_hash=row["prev_hash"], hash=row["hash"],
+            action_id=row["action_id"], phase=row["phase"],
         )
 
     def records(self) -> list[AuditRecord]:

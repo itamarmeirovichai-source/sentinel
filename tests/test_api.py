@@ -63,3 +63,37 @@ def test_policy_get_update_and_reject_invalid(tmp_path):
 
     bad = client.put("/api/policy", json={"yaml": "rules: [unclosed"})
     assert bad.status_code == 400
+
+
+def test_mutations_require_token_when_configured(tmp_path):
+    db = str(tmp_path / "api.db")
+    pol = str(tmp_path / "p.yaml")
+    with open(pol, "w", encoding="utf-8") as fh:
+        fh.write("version: 1\ndefault: deny\nrules: []\n")
+    client = TestClient(create_app(Config(db_path=db, policy_path=pol, api_token="s3cret")))
+
+    assert client.post("/api/kill", json={"scope": "*"}).status_code == 401
+    assert client.post("/api/kill", json={"scope": "*"},
+                       headers={"Authorization": "Bearer nope"}).status_code == 401
+    ok = client.post("/api/kill", json={"scope": "*"},
+                     headers={"Authorization": "Bearer s3cret"})
+    assert ok.status_code == 200
+    assert client.get("/api/status").json()["auth_required"] is True  # reads stay open
+
+
+def test_pending_approvals_listed_and_approvable(tmp_path):
+    from sentinel.approvals import Approvals
+    from sentinel.models import ToolCall
+
+    db = str(tmp_path / "api.db")
+    pol = str(tmp_path / "p.yaml")
+    with open(pol, "w", encoding="utf-8") as fh:
+        fh.write("version: 1\ndefault: deny\nrules: []\n")
+    ap = Approvals(db)
+    aid = ap.request(ToolCall(tool="place_order", args={"amount": 5000}, agent_id="a1"))
+
+    client = TestClient(create_app(Config(db_path=db, policy_path=pol)))
+    listed = client.get("/api/approvals").json()
+    assert len(listed) == 1 and listed[0]["id"] == aid
+    assert client.post("/api/approve", json={"id": aid, "by": "tester"}).status_code == 200
+    assert ap.consume(ToolCall(tool="place_order", args={"amount": 5000}, agent_id="a1")) is True

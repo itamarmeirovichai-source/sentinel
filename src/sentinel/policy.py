@@ -44,21 +44,22 @@ _ACTIONS = {
 
 
 class Policy:
-    def __init__(self, spec: dict, clock: Callable[[], float] = time.monotonic):
+    def __init__(self, spec: dict, clock: Callable[[], float] = time.monotonic, limiter=None):
         self.spec = spec or {}
         self.default = str(self.spec.get("default", "deny")).lower()
         self.rules = self.spec.get("rules") or []
         self._clock = clock
+        self._limiter = limiter  # if set, used instead of the in-memory window
         self._hits: dict[tuple, list[float]] = {}
 
     @classmethod
-    def from_yaml(cls, text: str, clock: Callable[[], float] = time.monotonic) -> "Policy":
-        return cls(yaml.safe_load(text) or {}, clock=clock)
+    def from_yaml(cls, text: str, clock: Callable[[], float] = time.monotonic, limiter=None) -> "Policy":
+        return cls(yaml.safe_load(text) or {}, clock=clock, limiter=limiter)
 
     @classmethod
-    def from_file(cls, path: str, clock: Callable[[], float] = time.monotonic) -> "Policy":
+    def from_file(cls, path: str, clock: Callable[[], float] = time.monotonic, limiter=None) -> "Policy":
         with open(path, "r", encoding="utf-8") as fh:
-            return cls.from_yaml(fh.read(), clock=clock)
+            return cls.from_yaml(fh.read(), clock=clock, limiter=limiter)
 
     def evaluate(self, call: ToolCall) -> PolicyResult:
         for rule in self.rules:
@@ -114,6 +115,8 @@ class Policy:
     def _under_rate_limit(self, rid: str, call: ToolCall, rl: dict) -> bool:
         max_n = int(rl.get("max", 0))
         per = float(rl.get("per_seconds", 60))
+        if self._limiter is not None:
+            return self._limiter.allow(f"{rid}|{call.agent_id}", max_n, per)
         now = self._clock()
         key = (rid, call.agent_id)
         hits = [t for t in self._hits.get(key, []) if now - t < per]

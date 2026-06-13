@@ -13,9 +13,10 @@
   body { margin: 0; background: var(--bg); color: var(--fg);
     font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   header { display: flex; align-items: center; gap: 16px; padding: 14px 20px;
-    border-bottom: 1px solid var(--line); background: var(--panel); }
+    border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
   header h1 { font-size: 16px; margin: 0; letter-spacing: .5px; }
   header .tag { color: var(--muted); font-size: 12px; }
+  header .token { margin-left: auto; display: flex; gap: 6px; align-items: center; }
   .wrap { padding: 20px; display: grid; gap: 16px; grid-template-columns: 1fr 1fr; max-width: 1200px; margin: 0 auto; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
   .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 12px; }
@@ -26,27 +27,36 @@
   .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .ok { background: rgba(63,185,80,.15); color: var(--green); }
   .bad { background: rgba(248,81,73,.15); color: var(--red); }
+  input { font: inherit; background: #0d1117; color: var(--fg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 10px; }
   button { font: inherit; border: 1px solid var(--line); background: #1c2530; color: var(--fg);
     padding: 8px 14px; border-radius: 6px; cursor: pointer; }
   button:hover { border-color: var(--blue); }
   button.danger { border-color: var(--red); color: var(--red); }
   button.danger:hover { background: rgba(248,81,73,.12); }
+  button.go { border-color: var(--green); color: var(--green); padding: 4px 10px; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 12px; vertical-align: top; }
   th { color: var(--muted); font-weight: 600; }
   td.allow { color: var(--green); } td.block { color: var(--red); } td.require_approval { color: var(--amber); }
   .flags { color: var(--amber); font-size: 11px; }
-  textarea { width: 100%; min-height: 220px; background: #0d1117; color: var(--fg);
+  textarea { width: 100%; min-height: 200px; background: #0d1117; color: var(--fg);
     border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: inherit; }
-  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
   .muted { color: var(--muted); }
   code { color: var(--blue); }
+  .appr { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 8px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 6px; }
 </style>
 </head>
 <body>
 <header>
   <h1>● SENTINEL</h1>
   <span class="tag">compliance-grade flight recorder + kill switch &nbsp;·&nbsp; <span id="clock"></span></span>
+  <span class="token">
+    <span class="muted">control token</span>
+    <input id="token" type="password" placeholder="paste token" style="width:180px" oninput="saveToken()" />
+  </span>
 </header>
 
 <div class="wrap">
@@ -65,6 +75,11 @@
   </div>
 
   <div class="card">
+    <h2>Pending approvals <span id="apprCount" class="muted"></span></h2>
+    <div id="approvals"><span class="muted">none</span></div>
+  </div>
+
+  <div class="card full">
     <h2>Active policy <span class="muted" id="policyPath"></span></h2>
     <textarea id="policy" spellcheck="false"></textarea>
     <div class="row">
@@ -85,6 +100,17 @@
 <script>
 const $ = (id) => document.getElementById(id);
 let killed = false;
+
+function saveToken() { localStorage.setItem('sentinel_token', $('token').value); }
+function authHeaders() {
+  const t = localStorage.getItem('sentinel_token') || '';
+  return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t};
+}
+async function mutate(url, body) {
+  const res = await fetch(url, {method: 'POST', headers: authHeaders(), body: JSON.stringify(body || {})});
+  if (res.status === 401) { alert('Invalid or missing control token — paste it top-right.'); return null; }
+  return res;
+}
 
 async function refresh() {
   try {
@@ -108,6 +134,14 @@ async function refresh() {
         <td class="muted">${r.policy_rule || '—'} · ${r.reason}</td>
         <td class="flags">${(r.flags||[]).join('<br>')}</td>
       </tr>`).join('');
+
+    const appr = await (await fetch('/api/approvals')).json();
+    $('apprCount').textContent = appr.length ? `(${appr.length})` : '';
+    $('approvals').innerHTML = appr.length ? appr.map(a => `
+      <div class="appr">
+        <span><code>${a.tool}</code> <span class="muted">${fmtArgs(a.args)} · ${a.agent_id}</span></span>
+        <button class="go" onclick="approve('${a.id}')">APPROVE</button>
+      </div>`).join('') : '<span class="muted">none</span>';
   } catch (e) { /* server not up yet */ }
 }
 
@@ -124,10 +158,13 @@ async function doVerify() {
 }
 
 async function toggleKill() {
-  const url = killed ? '/api/unkill' : '/api/kill';
-  await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({scope:'*', reason:'toggled from dashboard'})});
-  refresh();
+  const res = await mutate(killed ? '/api/unkill' : '/api/kill', {scope:'*', reason:'toggled from dashboard'});
+  if (res) refresh();
+}
+
+async function approve(id) {
+  const res = await mutate('/api/approve', {id, by:'dashboard'});
+  if (res) refresh();
 }
 
 async function loadPolicy() {
@@ -135,13 +172,15 @@ async function loadPolicy() {
   $('policy').value = p.yaml; $('policyPath').textContent = p.path;
 }
 async function savePolicy() {
-  const res = await fetch('/api/policy', {method:'PUT', headers:{'Content-Type':'application/json'},
+  const res = await fetch('/api/policy', {method:'PUT', headers: authHeaders(),
     body: JSON.stringify({yaml: $('policy').value})});
+  if (res.status === 401) { $('policyMsg').textContent = 'invalid control token'; return; }
   const j = await res.json().catch(()=>({}));
   $('policyMsg').textContent = res.ok ? 'saved ✓' : ('error: ' + (j.detail || res.status));
   setTimeout(()=>$('policyMsg').textContent='', 3000);
 }
 
+$('token').value = localStorage.getItem('sentinel_token') || '';
 setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
 loadPolicy();
 refresh();
