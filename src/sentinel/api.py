@@ -94,8 +94,8 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
         text = payload.get("yaml", "")
         try:
             Policy.from_yaml(text)  # validate before persisting
-        except Exception as exc:  # noqa: BLE001 - surface parse error to the caller
-            raise HTTPException(status_code=400, detail=f"invalid policy: {exc}")
+        except Exception as exc:  # surface parse error to the caller
+            raise HTTPException(status_code=400, detail=f"invalid policy: {exc}") from exc
         with open(cfg.policy_path, "w", encoding="utf-8") as fh:
             fh.write(text)
         return {"ok": True}

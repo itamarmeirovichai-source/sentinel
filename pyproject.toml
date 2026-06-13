@@ -46,3 +46,7 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI relies on calls (Body/Depends/Header/Query) in argument defaults.
+extend-immutable-calls = ["fastapi.Body", "fastapi.Depends", "fastapi.Header", "fastapi.Query"]
