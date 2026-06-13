@@ -1,0 +1,41 @@
+# Sentinel example policy — tuned for the autonomous trading-agent demo.
+# Evaluation is first-match-wins; anything unmatched hits `default` (deny).
+version: 1
+default: deny
+
+rules:
+  # Market data + balance reads are always fine.
+  - id: allow-market-reads
+    match: { tool: ["get_*", "list_*"] }
+    action: allow
+
+  # Destroying accounts / dropping data is never allowed.
+  - id: forbid-destructive
+    match: { tool: ["delete_*", "drop_*", "wipe_*"] }
+    action: block
+
+  # Orders above $500 need a human to approve.
+  - id: cap-large-orders
+    match:
+      tool: place_order
+      args: { amount: { gt: 500 } }
+    action: require_approval
+
+  # Otherwise allow orders, but throttle to 5 per minute.
+  - id: throttle-orders
+    match: { tool: place_order }
+    rate_limit: { max: 5, per_seconds: 60 }
+    action: allow
+
+  # Cancelling open orders is part of the kill/rollback path — allow it.
+  - id: allow-cancel
+    match: { tool: cancel_all_orders }
+    action: allow
+
+  # These two are allowed by policy but watched by the detector (lethal-trifecta demo).
+  - id: allow-secret-read
+    match: { tool: read_api_secret }
+    action: allow
+  - id: allow-egress
+    match: { tool: http_post }
+    action: allow

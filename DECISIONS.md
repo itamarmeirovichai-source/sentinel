@@ -34,3 +34,13 @@
 - **Default-deny:** אין כלל מתאים → block.
 - **Tests-first** על policy / kill switch / audit-integrity (קוד קריטי).
 - **Sentinel עצמו = משטח תקיפה** — threat model ב-`ARCHITECTURE.md` §6.
+
+## 2026-06-13 · Phase 3 — שינוי כפוי: HTTP layer
+**החלטה:** נבדק ש-FastAPI+uvicorn+pydantic מותקנים נקי על Python 3.14.3 → נשארנו עם FastAPI כמתוכנן (לא נפלנו ל-stdlib).
+**נימוק:** הסיכון היה wheels חסרים ל-3.14; אומת בפועל לפני התחייבות.
+**סטטוס:** ✅
+
+## 2026-06-13 · Phase 4 — בדיקות, demo, אבטחה — הושלם
+**החלטה:** 32 טסטים עוברים; E2E demo (5 תרחישים) עובד; tamper detection אומת חי; compliance export עובד; self-security check נקי (`SECURITY.md`).
+**הערה כנה:** ה-dashboard אומת פונקציונלית (טסטים + curl חי), אבל ה-preview-MCP לא הצליח להריץ אותו כי ה-sandbox חוסם גישה ל-.venv — מגבלת סביבה, לא באג. רץ תקין תחת `sentinel serve`.
+**סטטוס:** ✅ MVP הושלם.

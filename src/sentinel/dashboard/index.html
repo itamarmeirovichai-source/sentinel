@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel — Control Plane</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #131a23; --line: #243140; --fg: #e6edf3;
+    --muted: #8b9aac; --green: #3fb950; --red: #f85149; --amber: #d29922; --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 20px;
+    border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: .5px; }
+  header .tag { color: var(--muted); font-size: 12px; }
+  .wrap { padding: 20px; display: grid; gap: 16px; grid-template-columns: 1fr 1fr; max-width: 1200px; margin: 0 auto; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 12px; }
+  .full { grid-column: 1 / -1; }
+  .stat { display: flex; gap: 20px; flex-wrap: wrap; }
+  .stat div b { display: block; font-size: 22px; }
+  .stat div span { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+  .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ok { background: rgba(63,185,80,.15); color: var(--green); }
+  .bad { background: rgba(248,81,73,.15); color: var(--red); }
+  button { font: inherit; border: 1px solid var(--line); background: #1c2530; color: var(--fg);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  button:hover { border-color: var(--blue); }
+  button.danger { border-color: var(--red); color: var(--red); }
+  button.danger:hover { background: rgba(248,81,73,.12); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 12px; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  td.allow { color: var(--green); } td.block { color: var(--red); } td.require_approval { color: var(--amber); }
+  .flags { color: var(--amber); font-size: 11px; }
+  textarea { width: 100%; min-height: 220px; background: #0d1117; color: var(--fg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: inherit; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .muted { color: var(--muted); }
+  code { color: var(--blue); }
+</style>
+</head>
+<body>
+<header>
+  <h1>● SENTINEL</h1>
+  <span class="tag">compliance-grade flight recorder + kill switch &nbsp;·&nbsp; <span id="clock"></span></span>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Status</h2>
+    <div class="stat">
+      <div><b id="s-total">–</b><span>actions logged</span></div>
+      <div><b id="s-integrity">–</b><span>audit integrity</span></div>
+      <div><b id="s-kill">–</b><span>kill switch</span></div>
+    </div>
+    <div class="row">
+      <button onclick="doVerify()">VERIFY CHAIN</button>
+      <button class="danger" id="killBtn" onclick="toggleKill()">KILL ALL</button>
+      <span id="verifyMsg" class="muted"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Active policy <span class="muted" id="policyPath"></span></h2>
+    <textarea id="policy" spellcheck="false"></textarea>
+    <div class="row">
+      <button onclick="savePolicy()">SAVE POLICY</button>
+      <span id="policyMsg" class="muted"></span>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h2>Live action feed</h2>
+    <table>
+      <thead><tr><th>#</th><th>time</th><th>tool</th><th>decision</th><th>status</th><th>rule / reason</th><th>flags</th></tr></thead>
+      <tbody id="feed"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let killed = false;
+
+async function refresh() {
+  try {
+    const st = await (await fetch('/api/status')).json();
+    $('s-total').textContent = st.total_actions;
+    const ig = st.integrity.ok;
+    $('s-integrity').innerHTML = `<span class="pill ${ig ? 'ok' : 'bad'}">${ig ? 'INTACT' : 'TAMPERED'}</span>`;
+    const ks = st.killswitch || {};
+    killed = Object.values(ks).some(v => v.active);
+    $('s-kill').innerHTML = `<span class="pill ${killed ? 'bad' : 'ok'}">${killed ? 'ARMED' : 'CLEAR'}</span>`;
+    $('killBtn').textContent = killed ? 'RELEASE KILL' : 'KILL ALL';
+
+    const rows = await (await fetch('/api/actions?limit=50')).json();
+    $('feed').innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.seq}</td>
+        <td>${new Date(r.ts*1000).toLocaleTimeString()}</td>
+        <td><code>${r.tool}</code> <span class="muted">${fmtArgs(r.args)}</span></td>
+        <td class="${r.decision}">${r.decision}</td>
+        <td>${r.status}</td>
+        <td class="muted">${r.policy_rule || '—'} · ${r.reason}</td>
+        <td class="flags">${(r.flags||[]).join('<br>')}</td>
+      </tr>`).join('');
+  } catch (e) { /* server not up yet */ }
+}
+
+function fmtArgs(a) {
+  try { const s = JSON.stringify(a); return s.length > 60 ? s.slice(0,60)+'…' : s; }
+  catch { return ''; }
+}
+
+async function doVerify() {
+  const v = await (await fetch('/api/verify')).json();
+  $('verifyMsg').innerHTML = v.ok
+    ? '<span class="pill ok">chain verified</span>'
+    : `<span class="pill bad">TAMPER at seq ${v.first_bad_seq}: ${v.message}</span>`;
+}
+
+async function toggleKill() {
+  const url = killed ? '/api/unkill' : '/api/kill';
+  await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({scope:'*', reason:'toggled from dashboard'})});
+  refresh();
+}
+
+async function loadPolicy() {
+  const p = await (await fetch('/api/policy')).json();
+  $('policy').value = p.yaml; $('policyPath').textContent = p.path;
+}
+async function savePolicy() {
+  const res = await fetch('/api/policy', {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({yaml: $('policy').value})});
+  const j = await res.json().catch(()=>({}));
+  $('policyMsg').textContent = res.ok ? 'saved ✓' : ('error: ' + (j.detail || res.status));
+  setTimeout(()=>$('policyMsg').textContent='', 3000);
+}
+
+setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
+loadPolicy();
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

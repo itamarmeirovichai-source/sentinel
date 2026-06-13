@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sentinel",
+      "runtimeExecutable": "./.venv/bin/sentinel",
+      "runtimeArgs": ["serve"],
+      "port": 8787
+    }
+  ]
+}
