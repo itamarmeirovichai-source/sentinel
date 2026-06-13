@@ -96,38 +96,45 @@ class Sentinel:
         def wrapper(*args, **kwargs):
             call = ToolCall(tool=tool_name, args=self._bind(sig, args, kwargs),
                             agent_id=self.agent_id, session_id=self.session_id)
-            result = self.check(call)
-            flags = [f.as_str() for f in result.flags]
-            action_id = uuid.uuid4().hex
-
-            if result.decision == Decision.ALLOW:
-                # phase 1: record intent BEFORE the tool runs (survives a crash)
-                self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
-                                  flags, Status.EXECUTING, action_id=action_id, phase="intent")
-                try:
-                    out = fn(*args, **kwargs)
-                except Exception as exc:
-                    self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
-                                      flags, Status.ERROR, error=repr(exc),
-                                      action_id=action_id, phase="outcome")
-                    raise
-                # phase 2: record the outcome
-                self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
-                                  flags, Status.EXECUTED, action_id=action_id, phase="outcome")
-                return out
-
-            # Not allowed -> the tool is never invoked (single record).
-            if result.rule_id == "killswitch":
-                status = Status.KILLED
-            elif result.decision == Decision.REQUIRE_APPROVAL:
-                status = Status.PENDING_APPROVAL
-            else:
-                status = Status.BLOCKED
-            record = self.audit.append(call, result.decision, result.rule_id, result.reason,
-                                       flags, status, action_id=action_id, phase="event")
-            raise BlockedError(result.reason, record=record)
+            return self.enforce(call, lambda: fn(*args, **kwargs))
 
         return wrapper
+
+    def enforce(self, call: ToolCall, run: Callable[[], object]):
+        """Check `call`, then either run() it (two-phase logged) or block and raise.
+
+        The single enforcement path shared by every interceptor (SDK wrapper, MCP proxy).
+        """
+        result = self.check(call)
+        flags = [f.as_str() for f in result.flags]
+        action_id = uuid.uuid4().hex
+
+        if result.decision == Decision.ALLOW:
+            # phase 1: record intent BEFORE the tool runs (survives a crash)
+            self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+                              flags, Status.EXECUTING, action_id=action_id, phase="intent")
+            try:
+                out = run()
+            except Exception as exc:
+                self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+                                  flags, Status.ERROR, error=repr(exc),
+                                  action_id=action_id, phase="outcome")
+                raise
+            # phase 2: record the outcome
+            self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+                              flags, Status.EXECUTED, action_id=action_id, phase="outcome")
+            return out
+
+        # Not allowed -> the tool is never invoked (single record).
+        if result.rule_id == "killswitch":
+            status = Status.KILLED
+        elif result.decision == Decision.REQUIRE_APPROVAL:
+            status = Status.PENDING_APPROVAL
+        else:
+            status = Status.BLOCKED
+        record = self.audit.append(call, result.decision, result.rule_id, result.reason,
+                                   flags, status, action_id=action_id, phase="event")
+        raise BlockedError(result.reason, record=record)
 
     @staticmethod
     def _bind(sig, args, kwargs) -> dict:

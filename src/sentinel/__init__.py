@@ -21,19 +21,25 @@ from sentinel.policy import Policy, PolicyResult
 from sentinel.audit import AuditLog, VerifyResult
 from sentinel.killswitch import KillSwitch
 from sentinel.detector import Detector
+from sentinel.approvals import Approvals
+from sentinel.ratelimit import SqliteRateLimiter
 from sentinel.sentinel import Sentinel, BlockedError
+from sentinel.mcp_proxy import MCPProxy
 
 __version__ = "0.1.0"
 
 __all__ = [
     "Sentinel",
     "BlockedError",
+    "MCPProxy",
     "Policy",
     "PolicyResult",
     "AuditLog",
     "VerifyResult",
     "KillSwitch",
     "Detector",
+    "Approvals",
+    "SqliteRateLimiter",
     "ToolCall",
     "Decision",
     "Status",
