@@ -21,6 +21,7 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 ### Control plane
 - FastAPI **dashboard** + API: live feed, integrity verify, policy editor, kill switch, approvals.
 - **API auth** via `SENTINEL_API_TOKEN` on mutating endpoints; `sentinel serve` auto-generates one.
+- **Read-endpoint protection** (`SENTINEL_API_PROTECT_READS`) — gate the sensitive audit reads behind the token too.
 - **Human-in-the-loop approvals**: `require_approval` parks a call; operator approves; next identical call runs once.
 - Persistent **rate limiter** (survives restart / shared across processes).
 
@@ -28,6 +29,6 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 - CLI: `serve | verify | export [--format json|otel] | kill | unkill | approvals | approve | demo`.
 - **OpenTelemetry GenAI** export — JSON spans (`gen_ai.*` + `sentinel.*`) and real SDK span emission (`record_spans`, optional `otel` extra).
 - Optional extras: `pip install "sentinel[mcp,otel]"`. Builds a clean wheel/sdist.
-- CI (GitHub Actions, py3.11–3.13). Apache-2.0.
+- CI (GitHub Actions, py3.11–3.13) with a ruff lint gate. Concurrency-safe SQLite (WAL + busy_timeout). Apache-2.0.
 
-58 tests passing.
+61 tests passing.

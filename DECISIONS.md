@@ -60,3 +60,8 @@
 - **OTel SDK exporter** (`record_spans`, extra `otel`): פולט spans אמיתיים, לא רק JSON.
 - **wheel + sdist** נבנו ואומתו בהתקנה ל-venv נקי → `pip install sentinel` עובד.
 **סטטוס:** ✅ 58 טסטים. נשאר רק לא-קוד (design partner אמיתי) + פרסום PyPI (דורש חשבון — לא מבוצע אוטומטית).
+
+## 2026-06-13 · Trust hardening (תשובה ל"מה עוד נשאר")
+**החלטה:** לסגור 3 פערים אמיתיים שמעלים אמינות (לא gold-plating): (1) SQLite **WAL + busy_timeout** דרך `db.py` משותף — מונע "database is locked" כשהדאשבורד קורא בזמן שסוכן כותב; (2) `SENTINEL_API_PROTECT_READS` לנעילת קריאות ה-audit הרגישות מאחורי token; (3) **ruff** lint gate ב-CI.
+**הערה כנה:** בקומיט הראשון של הסבב טענתי בטעות "lint clean" — ruff מצא 5 (B008/B904). תוקן בקומיט עוקב; עכשיו נקי באמת (exit 0).
+**סטטוס:** ✅ 61 טסטים, ruff נקי. **מכאן והלאה עוד קוד = תשואה פוחתת בלי משתמש אמיתי** — ההמלצה לעצור את הגולת-זהב ולתקֵף עם monitor-mode dogfood.

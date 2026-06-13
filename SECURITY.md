@@ -25,6 +25,9 @@ We take that seriously.
 | Real secrets in source | ✅ none (only obviously-fake demo fixtures in `examples/`) |
 | Unsafe sinks (`eval`/`exec`/`yaml.load`/`shell=True`) | ✅ none found |
 | Tamper detection | ✅ verified live (edit at seq N → `verify` fails at seq N) |
+| Sensitive read endpoints lockable | ✅ `SENTINEL_API_PROTECT_READS` gates GET `/api/*` behind the token |
+| Storage concurrency | ✅ WAL + busy_timeout (avoids "database is locked") |
+| Static lint gate | ✅ ruff clean (E,F,W,I,B) in CI |
 
 ## Known limitations (tracked in [ROADMAP.md](ROADMAP.md))
 
