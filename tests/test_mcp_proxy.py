@@ -4,12 +4,14 @@ Proves the `Interceptor` abstraction: the proxy enforces via the same Sentinel c
 the SDK wrapper (default-deny, fail-closed, two-phase audit, kill switch), but nothing
 the agent calls can bypass it.
 """
+import asyncio
+
 import pytest
 
 from sentinel.audit import AuditLog
 from sentinel.detector import Detector
 from sentinel.killswitch import KillSwitch
-from sentinel.mcp_proxy import MCPProxy
+from sentinel.mcp_proxy import AsyncMCPProxy, MCPProxy
 from sentinel.models import Status
 from sentinel.policy import Policy
 from sentinel.sentinel import BlockedError, Sentinel
@@ -89,3 +91,29 @@ def test_upstream_can_be_a_plain_callable(tmp_path):
     proxy = MCPProxy(s, up)
     assert proxy.call_tool("get_x", {}) == "done"
     assert seen == ["get_x"]
+
+
+class AsyncUpstream:
+    def __init__(self):
+        self.calls = []
+
+    async def call_tool(self, name, arguments):
+        self.calls.append((name, arguments))
+        return {"ok": name}
+
+
+def test_async_proxy_allows_then_blocks(tmp_path):
+    db = str(tmp_path / "am.db")
+    s = Sentinel(policy=Policy.from_yaml(POLICY), audit=AuditLog(db),
+                 killswitch=KillSwitch(db), detector=Detector())
+    up = AsyncUpstream()
+    proxy = AsyncMCPProxy(s, up)
+
+    out = asyncio.run(proxy.call_tool("get_quote", {"symbol": "AAPL"}))
+    assert out == {"ok": "get_quote"}
+    assert up.calls == [("get_quote", {"symbol": "AAPL"})]
+    assert s.audit.records()[-1].status == Status.EXECUTED.value
+
+    with pytest.raises(BlockedError):
+        asyncio.run(proxy.call_tool("delete_db", {}))
+    assert up.calls == [("get_quote", {"symbol": "AAPL"})]  # blocked -> upstream untouched

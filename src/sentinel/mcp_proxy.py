@@ -37,3 +37,25 @@ class MCPProxy:
         call = ToolCall(tool=name, args=arguments,
                         agent_id=self.agent_id, session_id=self.session_id)
         return self.sentinel.enforce(call, lambda: self._forward(name, arguments))
+
+
+class AsyncMCPProxy:
+    """Man-in-the-middle in front of a *live* upstream `mcp.ClientSession` (async).
+
+    The true proxy shape: an MCP client talks to Sentinel, which forwards each tool call
+    to real upstream MCP servers — but only after `Sentinel.aenforce` allows it. `session`
+    is anything exposing async `call_tool(name, arguments)` (e.g. an mcp.ClientSession).
+    """
+
+    def __init__(self, sentinel: Sentinel, session: Any,
+                 agent_id: Optional[str] = None, session_id: Optional[str] = None):
+        self.sentinel = sentinel
+        self.session = session
+        self.agent_id = agent_id or sentinel.agent_id
+        self.session_id = session_id or sentinel.session_id
+
+    async def call_tool(self, name: str, arguments: Optional[dict] = None) -> Any:
+        arguments = dict(arguments or {})
+        call = ToolCall(tool=name, args=arguments,
+                        agent_id=self.agent_id, session_id=self.session_id)
+        return await self.sentinel.aenforce(call, lambda: self.session.call_tool(name, arguments))

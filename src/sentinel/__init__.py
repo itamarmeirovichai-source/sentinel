@@ -13,7 +13,7 @@ from sentinel.approvals import Approvals
 from sentinel.audit import AuditLog, VerifyResult
 from sentinel.detector import Detector
 from sentinel.killswitch import KillSwitch
-from sentinel.mcp_proxy import MCPProxy
+from sentinel.mcp_proxy import AsyncMCPProxy, MCPProxy
 from sentinel.mcp_server import SentinelMCPServer
 from sentinel.models import (
     AuditRecord,
@@ -33,6 +33,7 @@ __all__ = [
     "Sentinel",
     "BlockedError",
     "MCPProxy",
+    "AsyncMCPProxy",
     "SentinelMCPServer",
     "Policy",
     "PolicyResult",

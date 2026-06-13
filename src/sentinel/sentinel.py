@@ -106,48 +106,62 @@ class Sentinel:
 
         return wrapper
 
-    def enforce(self, call: ToolCall, run: Callable[[], object]):
-        """Check `call`, then either run() it (two-phase logged) or block and raise.
-
-        The single enforcement path shared by every interceptor (SDK wrapper, MCP proxy).
-        In `monitor` mode the policy verdict is logged but never blocks — only the kill
-        switch still stops the agent.
-        """
+    # --- shared decision + logging (used by both enforce and aenforce) ----
+    def _decide(self, call: ToolCall):
         result = self.check(call)
         flags = [f.as_str() for f in result.flags]
         action_id = uuid.uuid4().hex
-
         # monitor mode: observe-only for policy verdicts; the kill switch still enforces.
         monitored = self.mode == "monitor" and result.rule_id != "killswitch"
         if monitored and result.decision != Decision.ALLOW:
             flags = flags + [f"monitor_mode:would_{result.decision.value}"]
+        runs = result.decision == Decision.ALLOW or monitored
+        return result, flags, action_id, runs
 
-        if result.decision == Decision.ALLOW or monitored:
-            # phase 1: record intent BEFORE the tool runs (survives a crash)
-            self.audit.append(call, result.decision, result.rule_id, result.reason,
-                              flags, Status.EXECUTING, action_id=action_id, phase="intent")
-            try:
-                out = run()
-            except Exception as exc:
-                self.audit.append(call, result.decision, result.rule_id, result.reason,
-                                  flags, Status.ERROR, error=repr(exc),
-                                  action_id=action_id, phase="outcome")
-                raise
-            # phase 2: record the outcome
-            self.audit.append(call, result.decision, result.rule_id, result.reason,
-                              flags, Status.EXECUTED, action_id=action_id, phase="outcome")
-            return out
+    def _log(self, call, result, flags, action_id, status, error=None, phase="outcome"):
+        return self.audit.append(call, result.decision, result.rule_id, result.reason,
+                                 flags, status, error=error, action_id=action_id, phase=phase)
 
-        # Not allowed -> the tool is never invoked (single record).
+    def _block(self, call, result, flags, action_id):
         if result.rule_id == "killswitch":
             status = Status.KILLED
         elif result.decision == Decision.REQUIRE_APPROVAL:
             status = Status.PENDING_APPROVAL
         else:
             status = Status.BLOCKED
-        record = self.audit.append(call, result.decision, result.rule_id, result.reason,
-                                   flags, status, action_id=action_id, phase="event")
+        record = self._log(call, result, flags, action_id, status, phase="event")
         raise BlockedError(result.reason, record=record)
+
+    def enforce(self, call: ToolCall, run: Callable[[], object]):
+        """Check `call`, then either run() it (two-phase logged) or block and raise.
+
+        The single enforcement path shared by every interceptor (SDK wrapper, MCP proxy).
+        """
+        result, flags, action_id, runs = self._decide(call)
+        if not runs:
+            self._block(call, result, flags, action_id)  # raises
+        self._log(call, result, flags, action_id, Status.EXECUTING, phase="intent")
+        try:
+            out = run()
+        except Exception as exc:
+            self._log(call, result, flags, action_id, Status.ERROR, error=repr(exc))
+            raise
+        self._log(call, result, flags, action_id, Status.EXECUTED)
+        return out
+
+    async def aenforce(self, call: ToolCall, run):
+        """Async mirror of enforce() — awaits `run`. For async interceptors (live MCP)."""
+        result, flags, action_id, runs = self._decide(call)
+        if not runs:
+            self._block(call, result, flags, action_id)  # raises
+        self._log(call, result, flags, action_id, Status.EXECUTING, phase="intent")
+        try:
+            out = await run()
+        except Exception as exc:
+            self._log(call, result, flags, action_id, Status.ERROR, error=repr(exc))
+            raise
+        self._log(call, result, flags, action_id, Status.EXECUTED)
+        return out
 
     @staticmethod
     def _bind(sig, args, kwargs) -> dict:
