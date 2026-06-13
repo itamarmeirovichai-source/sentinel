@@ -26,6 +26,7 @@ class Config:
     api_port: int = 8787
     redact_keys: Optional[list[str]] = None
     api_token: Optional[str] = None  # if set, mutating API endpoints require it
+    mode: str = "enforce"  # "enforce" | "monitor" (observe-only)
 
     @classmethod
     def from_env(cls, load_env: bool = True) -> "Config":
@@ -39,4 +40,5 @@ class Config:
             api_port=int(os.getenv("SENTINEL_API_PORT", "8787")),
             redact_keys=[k.strip() for k in keys.split(",") if k.strip()] if keys else None,
             api_token=os.getenv("SENTINEL_API_TOKEN") or None,
+            mode=os.getenv("SENTINEL_MODE", "enforce"),
         )

@@ -178,6 +178,43 @@ def test_require_approval_then_allow_after_operator_approves(tmp_path):
         place_order("TSLA", amount=5000)
 
 
+def test_monitor_mode_observes_but_does_not_block(tmp_path):
+    db = str(tmp_path / "s.db")
+    s = Sentinel(policy=Policy.from_yaml(POLICY), audit=AuditLog(db),
+                 killswitch=KillSwitch(db), detector=Detector(),
+                 approvals=Approvals(db), mode="monitor")
+    ran = {"v": False}
+
+    @s.guard
+    def place_order(symbol, amount):
+        ran["v"] = True
+        return "done"
+
+    # would be blocked in enforce mode (amount > 500), but monitor mode runs it...
+    assert place_order("AAPL", amount=1000) == "done"
+    assert ran["v"] is True
+    last = s.audit.records()[-1]
+    assert last.status == Status.EXECUTED.value
+    assert last.decision == "block"  # the would-be verdict is still recorded
+    assert any("monitor_mode:would_block" in f for f in last.flags)
+
+
+def test_monitor_mode_still_honors_kill_switch(tmp_path):
+    db = str(tmp_path / "s.db")
+    s = Sentinel(policy=Policy.from_yaml(POLICY), audit=AuditLog(db),
+                 killswitch=KillSwitch(db), detector=Detector(),
+                 approvals=Approvals(db), mode="monitor")
+
+    @s.guard
+    def get_quote(symbol):
+        return "ok"
+
+    s.killswitch.arm("*", reason="emergency")
+    with pytest.raises(BlockedError):       # kill is the human override — always enforces
+        get_quote("AAPL")
+    assert s.audit.records()[-1].status == Status.KILLED.value
+
+
 def test_two_phase_logging_records_intent_then_outcome(tmp_path):
     s = build(tmp_path)
 

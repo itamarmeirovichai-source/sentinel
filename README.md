@@ -77,12 +77,20 @@ enforcement (`Sentinel.enforce`) runs behind a proxy — nothing the agent calls
 bypass it:
 
 ```python
-from sentinel import MCPProxy
-proxy = MCPProxy(sentinel, upstream=my_mcp_session)   # .call_tool(name, args) is enforced
+from sentinel import MCPProxy, SentinelMCPServer
+
+proxy = MCPProxy(sentinel, upstream=my_mcp_session)   # guard calls to upstream MCP servers
+server = SentinelMCPServer(sentinel)                  # OR expose your own tools over MCP
+server.add_tool("get_quote", get_quote)               #    with enforcement built in
 ```
+
+Install the optional transports with `pip install "sentinel[mcp,otel]"`.
 
 ## Operating it
 
+- **Monitor mode** — `SENTINEL_MODE=monitor` (or `Sentinel(mode="monitor")`) logs the
+  would-be verdict and **never blocks** — the kill switch still works. Deploy in front of
+  a live agent, watch, build trust, then flip to enforce. (Try `SENTINEL_MODE=monitor sentinel demo`.)
 - **Dashboard auth** — set `SENTINEL_API_TOKEN` (or let `sentinel serve` generate one);
   mutating endpoints (kill / policy / approve) then require `Authorization: Bearer …`.
 - **Human-in-the-loop** — a `require_approval` call is parked; approve it from the

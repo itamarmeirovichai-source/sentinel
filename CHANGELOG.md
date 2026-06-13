@@ -11,10 +11,12 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 - Persisted **kill switch** (global / per-agent) and `fail-closed` enforcement.
 - **Detector v1** heuristics: lethal-trifecta, off-baseline, injection signatures.
 - Secret **redaction** at write time; compliance mapping (EU AI Act Art. 12, OWASP Agentic).
+- **Monitor mode** (observe-only): logs the would-be verdict, never blocks — but the kill switch still enforces. The trust bridge before flipping to enforcement.
 
 ### Interception
 - **SDK wrapper** (`@sentinel.guard`) — the default interceptor.
 - **MCP proxy** (`MCPProxy`) — second interceptor over the same `enforce()` path; no bypass.
+- **Sentinel-guarded MCP server** (`SentinelMCPServer`) — expose tools over real MCP with enforcement built in (optional `mcp` extra).
 
 ### Control plane
 - FastAPI **dashboard** + API: live feed, integrity verify, policy editor, kill switch, approvals.
@@ -24,7 +26,8 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 
 ### Tooling
 - CLI: `serve | verify | export [--format json|otel] | kill | unkill | approvals | approve | demo`.
-- **OpenTelemetry GenAI** export (`gen_ai.*` + `sentinel.*` attributes).
+- **OpenTelemetry GenAI** export — JSON spans (`gen_ai.*` + `sentinel.*`) and real SDK span emission (`record_spans`, optional `otel` extra).
+- Optional extras: `pip install "sentinel[mcp,otel]"`. Builds a clean wheel/sdist.
 - CI (GitHub Actions, py3.11–3.13). Apache-2.0.
 
-51 tests passing.
+58 tests passing.

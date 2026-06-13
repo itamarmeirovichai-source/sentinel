@@ -42,6 +42,7 @@ def build_sentinel() -> Sentinel:
         approvals=Approvals(cfg.db_path),
         agent_id="trading-bot-1",
         session_id="demo-session",
+        mode=cfg.mode,  # set SENTINEL_MODE=monitor to watch without blocking
     )
     s.killswitch.disarm("*")  # clear a kill left armed by a previous run
     return s

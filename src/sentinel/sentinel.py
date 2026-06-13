@@ -37,7 +37,8 @@ class BlockedError(RuntimeError):
 class Sentinel:
     def __init__(self, policy: Policy, audit: AuditLog, killswitch: KillSwitch,
                  detector: Optional[Detector] = None, approvals: Optional[Approvals] = None,
-                 agent_id: str = "default", session_id: str = "default"):
+                 agent_id: str = "default", session_id: str = "default",
+                 mode: str = "enforce"):
         self.policy = policy
         self.audit = audit
         self.killswitch = killswitch
@@ -45,10 +46,14 @@ class Sentinel:
         self.approvals = approvals
         self.agent_id = agent_id
         self.session_id = session_id
+        # "enforce" (default) blocks; "monitor" observes-only (logs the would-be verdict,
+        # never blocks) — except the kill switch, which always stops the agent.
+        self.mode = mode
 
     @classmethod
     def from_files(cls, policy: str, db: str, detector: Optional[Detector] = None,
-                   agent_id: str = "default", session_id: str = "default") -> "Sentinel":
+                   agent_id: str = "default", session_id: str = "default",
+                   mode: str = "enforce") -> "Sentinel":
         return cls(
             policy=Policy.from_file(policy, limiter=SqliteRateLimiter(db)),
             audit=AuditLog(db),
@@ -57,6 +62,7 @@ class Sentinel:
             approvals=Approvals(db),
             agent_id=agent_id,
             session_id=session_id,
+            mode=mode,
         )
 
     # --- core decision ----------------------------------------------------
@@ -104,24 +110,31 @@ class Sentinel:
         """Check `call`, then either run() it (two-phase logged) or block and raise.
 
         The single enforcement path shared by every interceptor (SDK wrapper, MCP proxy).
+        In `monitor` mode the policy verdict is logged but never blocks — only the kill
+        switch still stops the agent.
         """
         result = self.check(call)
         flags = [f.as_str() for f in result.flags]
         action_id = uuid.uuid4().hex
 
-        if result.decision == Decision.ALLOW:
+        # monitor mode: observe-only for policy verdicts; the kill switch still enforces.
+        monitored = self.mode == "monitor" and result.rule_id != "killswitch"
+        if monitored and result.decision != Decision.ALLOW:
+            flags = flags + [f"monitor_mode:would_{result.decision.value}"]
+
+        if result.decision == Decision.ALLOW or monitored:
             # phase 1: record intent BEFORE the tool runs (survives a crash)
-            self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+            self.audit.append(call, result.decision, result.rule_id, result.reason,
                               flags, Status.EXECUTING, action_id=action_id, phase="intent")
             try:
                 out = run()
             except Exception as exc:
-                self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+                self.audit.append(call, result.decision, result.rule_id, result.reason,
                                   flags, Status.ERROR, error=repr(exc),
                                   action_id=action_id, phase="outcome")
                 raise
             # phase 2: record the outcome
-            self.audit.append(call, Decision.ALLOW, result.rule_id, result.reason,
+            self.audit.append(call, result.decision, result.rule_id, result.reason,
                               flags, Status.EXECUTED, action_id=action_id, phase="outcome")
             return out
 

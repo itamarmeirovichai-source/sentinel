@@ -25,6 +25,7 @@ from sentinel.approvals import Approvals
 from sentinel.ratelimit import SqliteRateLimiter
 from sentinel.sentinel import Sentinel, BlockedError
 from sentinel.mcp_proxy import MCPProxy
+from sentinel.mcp_server import SentinelMCPServer
 
 __version__ = "0.1.0"
 
@@ -32,6 +33,7 @@ __all__ = [
     "Sentinel",
     "BlockedError",
     "MCPProxy",
+    "SentinelMCPServer",
     "Policy",
     "PolicyResult",
     "AuditLog",

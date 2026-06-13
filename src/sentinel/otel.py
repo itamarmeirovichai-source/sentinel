@@ -45,3 +45,35 @@ def _to_span(rec: AuditRecord) -> dict:
 
 def to_otel_spans(records: Iterable[AuditRecord]) -> list[dict]:
     return [_to_span(r) for r in records]
+
+
+def _attr(value):
+    if value is None:
+        return None
+    if isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [str(x) for x in value]
+    return str(value)
+
+
+def record_spans(records: Iterable[AuditRecord], tracer) -> int:
+    """Emit each audit record as a *real* OpenTelemetry span via `tracer`. Returns the count.
+
+    Requires `opentelemetry-sdk` (the `otel` extra). The caller wires up the tracer and
+    exporter (OTLP to a collector, console, or in-memory). None-valued attributes are skipped.
+    """
+    from opentelemetry.trace import Status as OtelStatus, StatusCode  # lazy import
+
+    count = 0
+    for rec in records:
+        span_dict = _to_span(rec)
+        with tracer.start_as_current_span(span_dict["name"]) as span:
+            for key, value in span_dict["attributes"].items():
+                attr = _attr(value)
+                if attr is not None:
+                    span.set_attribute(key, attr)
+            if span_dict["status"]["code"] == "ERROR":
+                span.set_status(OtelStatus(StatusCode.ERROR, span_dict["status"]["message"]))
+        count += 1
+    return count

@@ -52,3 +52,11 @@
 - **B (MCP-proxy):** `MCPProxy` מעל `Sentinel.enforce` משותף (refactor) — אין נתיב bypass.
 - **C (OSS):** Apache-2.0, OTel GenAI export (`gen_ai.*`), CI (3.11–3.13), classifiers, CHANGELOG.
 **סטטוס:** ✅ 51 טסטים עוברים. חיבור MeiroX נדחה במכוון עד שיש אמון מוכח.
+
+## 2026-06-13 · "תמשיך עד המטרה" — monitor mode, MCP server, OTel SDK, wheel
+**החלטה:** להמשיך אוטונומית עד סגירת כל הסקופ הבר-בנייה (בלי MeiroX, בלי פרסום חיצוני שדורש הרשאות).
+- **Monitor mode** (`mode="monitor"` / `SENTINEL_MODE=monitor`): observe-only — מתעד את ההכרעה-שהייתה אבל לא חוסם; ה-kill switch עדיין אוכף. גשר האמון: אפשר "shadow" על סוכן אמיתי בלי סיכון — בלי לגעת ב-MeiroX החי.
+- **SentinelMCPServer**: שרת MCP אמיתי (חבילת `mcp`, optional extra) שחושף tools עם אכיפה מובנית; `handle_call` טהור ונבדק בלי תלות ב-mcp.
+- **OTel SDK exporter** (`record_spans`, extra `otel`): פולט spans אמיתיים, לא רק JSON.
+- **wheel + sdist** נבנו ואומתו בהתקנה ל-venv נקי → `pip install sentinel` עובד.
+**סטטוס:** ✅ 58 טסטים. נשאר רק לא-קוד (design partner אמיתי) + פרסום PyPI (דורש חשבון — לא מבוצע אוטומטית).
