@@ -15,8 +15,10 @@ def main(argv=None) -> None:
     sub = parser.add_subparsers(dest="cmd")
     sub.add_parser("serve", help="run the control API + dashboard")
     sub.add_parser("verify", help="verify the audit log integrity")
-    ex = sub.add_parser("export", help="export a compliance report (JSON)")
+    ex = sub.add_parser("export", help="export a compliance report")
     ex.add_argument("--out", default=None, help="write the report to this file")
+    ex.add_argument("--format", choices=["json", "otel"], default="json",
+                    help="json compliance report (default) or OpenTelemetry GenAI spans")
     kill = sub.add_parser("kill", help="arm the kill switch")
     kill.add_argument("--scope", default="*")
     kill.add_argument("--reason", default="armed via cli")
@@ -53,12 +55,19 @@ def main(argv=None) -> None:
     elif args.cmd == "export":
         from sentinel.audit import AuditLog
 
-        report = AuditLog(cfg.db_path).export()
-        text = json.dumps(report, indent=2, default=str)
+        log = AuditLog(cfg.db_path)
+        if args.format == "otel":
+            from sentinel.otel import to_otel_spans
+
+            spans = to_otel_spans(log.records())
+            text, count = json.dumps({"spans": spans}, indent=2, default=str), len(spans)
+        else:
+            report = log.export()
+            text, count = json.dumps(report, indent=2, default=str), report["count"]
         if args.out:
             with open(args.out, "w", encoding="utf-8") as fh:
                 fh.write(text)
-            print(f"wrote {args.out}: {report['count']} records, integrity ok={report['integrity']['ok']}")
+            print(f"wrote {args.out}: {count} records ({args.format})")
         else:
             print(text)
 

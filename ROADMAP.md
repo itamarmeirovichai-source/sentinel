@@ -30,14 +30,22 @@ mapping is the product plan.
 3. **Period 3 — settlement (long-term):** integrate (don't rebuild) AP2 / x402 / ACK;
    our neutral risk score underwrites agent-to-agent commerce.
 
+## Shipped since the MVP (this session)
+
+- ✅ **MCP-proxy adapter** (`MCPProxy`) over a shared `Sentinel.enforce` path — no bypass.
+- ✅ **Two-phase logging** (intent + outcome, linked by `action_id`).
+- ✅ **Approval workflow** — `require_approval` parks; operator approves; runs once.
+- ✅ **Persisted rate limiter** (SQLite, survives restart).
+- ✅ **Dashboard auth** (`SENTINEL_API_TOKEN` on mutating endpoints).
+- ✅ **OpenTelemetry GenAI export**, Apache-2.0 license, CI (3.11–3.13).
+
 ## Near-term concrete next steps
 
-1. **MCP-proxy adapter** — second `Interceptor` implementation; framework-agnostic, no code change. Touches the live MCP-security frontier.
-2. **Two-phase logging** — write an intent record before execution and an outcome record after, closing the "process dies mid-call" gap.
-3. **Approval workflow** — turn `require_approval` from a block into a real hold/resume.
-4. **More detectors** — untrusted-content tracking for the full lethal-trifecta, tool-arg anomaly baselining.
-5. **Postgres backend** + retention policy (EU AI Act Art. 12 ≥ 6 months).
-6. **Package & publish** — `pip install sentinel`, quickstart, OSS license, OpenTelemetry GenAI export so we're interoperable from day one.
+1. **Live MCP transport shell** — wire `MCPProxy` to a real async `mcp` stdio/HTTP server so an MCP client connects to Sentinel directly.
+2. **More detectors** — untrusted-content tracking for the full lethal-trifecta, tool-arg anomaly baselining; risk scoring over raw flags.
+3. **Postgres backend** + retention policy (EU AI Act Art. 12 ≥ 6 months) + external anchoring of the chain head (tail-truncation).
+4. **Publish** — `pip install sentinel`, real OTel SDK exporter adapter, docs site.
+5. **First design partner** — get one real team (or a dogfood target) running production agents through it.
 
 ## Honest risk note
 

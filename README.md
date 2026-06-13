@@ -70,6 +70,26 @@ def place_order(symbol: str, amount: float): ...
 # allowed calls run normally and are recorded with their outcome.
 ```
 
+## Two interceptors, one core
+
+The SDK wrapper is the default. For agents that reach tools over **MCP**, the same
+enforcement (`Sentinel.enforce`) runs behind a proxy — nothing the agent calls can
+bypass it:
+
+```python
+from sentinel import MCPProxy
+proxy = MCPProxy(sentinel, upstream=my_mcp_session)   # .call_tool(name, args) is enforced
+```
+
+## Operating it
+
+- **Dashboard auth** — set `SENTINEL_API_TOKEN` (or let `sentinel serve` generate one);
+  mutating endpoints (kill / policy / approve) then require `Authorization: Bearer …`.
+- **Human-in-the-loop** — a `require_approval` call is parked; approve it from the
+  dashboard or `sentinel approve <id>`, and the next identical call runs exactly once.
+- **Interop** — `sentinel export --format otel` emits OpenTelemetry GenAI spans
+  (`gen_ai.*`) for Langfuse / Datadog / any OTel backend.
+
 ## Documents
 
 | File | What |
@@ -80,6 +100,8 @@ def place_order(symbol: str, amount: float): ...
 | [DECISIONS.md](DECISIONS.md) | Decision log |
 | [DEMO.md](DEMO.md) | How to run the end-to-end demo |
 | [ROADMAP.md](ROADMAP.md) | What's next, and the known-limitation → feature map |
+| [SECURITY.md](SECURITY.md) | Design posture, self-check, known limitations |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes |
 
 ## License
 

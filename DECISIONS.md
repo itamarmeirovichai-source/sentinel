@@ -44,3 +44,11 @@
 **החלטה:** 32 טסטים עוברים; E2E demo (5 תרחישים) עובד; tamper detection אומת חי; compliance export עובד; self-security check נקי (`SECURITY.md`).
 **הערה כנה:** ה-dashboard אומת פונקציונלית (טסטים + curl חי), אבל ה-preview-MCP לא הצליח להריץ אותו כי ה-sandbox חוסם גישה ל-.venv — מגבלת סביבה, לא באג. רץ תקין תחת `sentinel serve`.
 **סטטוס:** ✅ MVP הושלם.
+
+## 2026-06-13 · Post-MVP — הכל חוץ מחיבור MeiroX (לבקשת Itamar)
+**החלטה:** Itamar בחר לבצע את כל ההמשך **חוץ** מחיבור הבוט האמיתי — "רק בנינו את זה, אני לא סומך על זה ב-100%". החלטה נכונה: לא לשים שכבת בקרה לא-בדוקה לפני כסף אמיתי. תואם [[feedback_account_anxiety]].
+**בוצע ב-3 workstreams:**
+- **A (הקשחה):** auth לדאשבורד (Bearer token, `SENTINEL_API_TOKEN`), rate-limit מתמשך (SQLite), two-phase logging (intent+outcome, action_id), approval flow (HITL — park→approve→run-once).
+- **B (MCP-proxy):** `MCPProxy` מעל `Sentinel.enforce` משותף (refactor) — אין נתיב bypass.
+- **C (OSS):** Apache-2.0, OTel GenAI export (`gen_ai.*`), CI (3.11–3.13), classifiers, CHANGELOG.
+**סטטוס:** ✅ 51 טסטים עוברים. חיבור MeiroX נדחה במכוון עד שיש אמון מוכח.

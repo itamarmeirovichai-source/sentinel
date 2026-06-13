@@ -5,6 +5,16 @@ description = "Compliance-grade flight recorder + kill switch for AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
+authors = [{ name = "Itamar Meirovich" }]
+keywords = ["ai-agents", "ai-security", "agent-governance", "audit", "guardrails", "mcp", "compliance", "eu-ai-act"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
   "pyyaml>=6.0",
   "fastapi>=0.110",
