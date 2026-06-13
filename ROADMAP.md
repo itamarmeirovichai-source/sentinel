@@ -40,14 +40,18 @@ mapping is the product plan.
 - ✅ **Monitor mode** — observe-only enforcement (the trust bridge); kill switch still enforces.
 - ✅ **Sentinel-guarded MCP server** (`SentinelMCPServer`) — expose tools over real `mcp` with enforcement.
 - ✅ **OpenTelemetry** — JSON spans + real SDK emission (`record_spans`); Apache-2.0; CI (3.11–3.13); clean wheel/sdist build verified.
+- ✅ **Stronger detector** — full lethal-trifecta (untrusted-content tracking), dangerous-arg (cmd/SQL/path/URL) + PII signals.
+- ✅ **Retention** — approval TTL + `purge`, rate-limit purge, `sentinel gc` (the audit log itself is never pruned).
+- ✅ **Upstream MCP man-in-the-middle** — `AsyncMCPProxy` over a live `mcp.ClientSession` (async `aenforce`).
+- ✅ **Concurrency-safe storage** (WAL + busy_timeout); **ruff** lint gate.
+- ✅ **EU AI Act Art.12 report** (`export --format art12`); **PyPI release automation** (Trusted Publishing) + PUBLISHING.md.
 
 ## Near-term concrete next steps
 
-1. **Upstream MCP man-in-the-middle** — wire `MCPProxy` to live upstream `mcp` stdio/SSE servers (today it proxies a callable/session; `SentinelMCPServer` already serves tools over MCP).
-2. **More detectors** — untrusted-content tracking for the full lethal-trifecta, tool-arg anomaly baselining; risk scoring over raw flags.
-3. **Postgres backend** + retention policy (EU AI Act Art. 12 ≥ 6 months) + external anchoring of the chain head (tail-truncation).
-4. **Publish to PyPI** — the wheel builds and installs clean; remaining is the account + `twine upload` + a docs site.
-5. **First design partner** — one real team (or a monitor-mode dogfood) running production agents through it.
+1. **Publish to PyPI** — automation is ready (`release.yml`); needs your account + a likely rename (`sentinel` is probably taken). See PUBLISHING.md.
+2. **Risk scoring over flags** — rank the detector's raw flags into a score; ML behavioral baselining.
+3. **Postgres backend** + external anchoring of the chain head (closes tail-truncation).
+4. **First design partner** — one real team (or a monitor-mode dogfood). This, not more code, is the bottleneck.
 
 ## Honest risk note
 

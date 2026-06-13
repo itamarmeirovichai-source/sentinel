@@ -97,6 +97,9 @@ Install the optional transports with `pip install "sentinel[mcp,otel]"`.
   dashboard or `sentinel approve <id>`, and the next identical call runs exactly once.
 - **Interop** — `sentinel export --format otel` emits OpenTelemetry GenAI spans
   (`gen_ai.*`) for Langfuse / Datadog / any OTel backend.
+- **Compliance** — `sentinel export --format art12` produces an EU AI Act Article 12
+  record-keeping report (system identity, logging period, retention, tamper-evidence).
+- **Housekeeping** — `sentinel gc` purges stale approvals / rate-limit state (never the audit log).
 
 ## Documents
 

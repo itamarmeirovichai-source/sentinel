@@ -9,7 +9,7 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 - Append-only, hash-chained **audit trail** (SQLite) with `verify` (tamper-evident) and a compliance `export`.
 - **Two-phase logging**: intent (pre-exec) + outcome (post-exec) records linked by `action_id`.
 - Persisted **kill switch** (global / per-agent) and `fail-closed` enforcement.
-- **Detector v1** heuristics: lethal-trifecta, off-baseline, injection signatures.
+- **Detector** heuristics: full lethal-trifecta (untrusted-content tracking), off-baseline, injection signatures, dangerous-arg (cmd/SQL/path/URL), PII-in-arg.
 - Secret **redaction** at write time; compliance mapping (EU AI Act Art. 12, OWASP Agentic).
 - **Monitor mode** (observe-only): logs the would-be verdict, never blocks — but the kill switch still enforces. The trust bridge before flipping to enforcement.
 
@@ -17,6 +17,7 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 - **SDK wrapper** (`@sentinel.guard`) — the default interceptor.
 - **MCP proxy** (`MCPProxy`) — second interceptor over the same `enforce()` path; no bypass.
 - **Sentinel-guarded MCP server** (`SentinelMCPServer`) — expose tools over real MCP with enforcement built in (optional `mcp` extra).
+- **Upstream MCP proxy** (`AsyncMCPProxy`) — man-in-the-middle over a live `mcp.ClientSession` (async `aenforce`).
 
 ### Control plane
 - FastAPI **dashboard** + API: live feed, integrity verify, policy editor, kill switch, approvals.
@@ -27,8 +28,10 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 
 ### Tooling
 - CLI: `serve | verify | export [--format json|otel] | kill | unkill | approvals | approve | demo`.
-- **OpenTelemetry GenAI** export — JSON spans (`gen_ai.*` + `sentinel.*`) and real SDK span emission (`record_spans`, optional `otel` extra).
-- Optional extras: `pip install "sentinel[mcp,otel]"`. Builds a clean wheel/sdist.
+- **Retention**: approval TTL + `sentinel gc` purges stale approvals / rate-limit state (audit log untouched).
+- **EU AI Act Art.12 report** (`export --format art12`); OpenTelemetry GenAI export (JSON spans + real SDK emission).
+- **PyPI release automation** (Trusted Publishing) — see PUBLISHING.md.
+- Optional extras: `pip install "sentinel[mcp,otel]"`. Clean wheel/sdist build.
 - CI (GitHub Actions, py3.11–3.13) with a ruff lint gate. Concurrency-safe SQLite (WAL + busy_timeout). Apache-2.0.
 
-61 tests passing.
+71 tests passing.
