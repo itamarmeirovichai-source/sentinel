@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import time
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 from sentinel.db import connect
 
@@ -36,3 +36,11 @@ class SqliteRateLimiter:
                 return False
             con.execute("INSERT INTO rate_hits (k, ts) VALUES (?,?)", (k, now))
             return True
+
+    def purge(self, older_than_seconds: Optional[float] = None) -> int:
+        """Delete rate-limit rows (all, or older than the cutoff). Returns rows deleted."""
+        with self._conn() as con:
+            if older_than_seconds is None:
+                return con.execute("DELETE FROM rate_hits").rowcount
+            return con.execute("DELETE FROM rate_hits WHERE ts < ?",
+                               (self._clock() - older_than_seconds,)).rowcount

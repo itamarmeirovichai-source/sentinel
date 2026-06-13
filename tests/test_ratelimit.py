@@ -31,3 +31,11 @@ def test_keys_are_independent(tmp_path):
     assert rl.allow("a", 1, 60) is True
     assert rl.allow("a", 1, 60) is False
     assert rl.allow("b", 1, 60) is True
+
+
+def test_purge_clears_state(tmp_path):
+    rl = SqliteRateLimiter(str(tmp_path / "rl.db"))
+    rl.allow("k", 5, 60)
+    rl.allow("k", 5, 60)
+    assert rl.purge() >= 2
+    assert rl.allow("k", 1, 60) is True  # fresh window after purge

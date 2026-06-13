@@ -13,7 +13,7 @@ import os
 import sqlite3
 import time
 import uuid
-from typing import Callable
+from typing import Callable, Optional
 
 from sentinel.db import connect
 from sentinel.models import ToolCall
@@ -28,9 +28,11 @@ def signature(call: ToolCall) -> str:
 
 
 class Approvals:
-    def __init__(self, db_path: str, clock: Callable[[], float] = time.time):
+    def __init__(self, db_path: str, clock: Callable[[], float] = time.time,
+                 ttl_seconds: Optional[float] = None):
         self.db_path = db_path
         self._clock = clock
+        self.ttl_seconds = ttl_seconds  # if set, an approval older than this can't authorize
         os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
         with self._conn() as con:
             con.execute(
@@ -88,13 +90,33 @@ class Approvals:
 
     def consume(self, call: ToolCall) -> bool:
         sig = signature(call)
+        now = self._clock()
         with self._conn() as con:
-            row = con.execute(
-                "SELECT id FROM approvals WHERE signature=? AND status='approved' "
-                "ORDER BY approved_ts ASC LIMIT 1",
+            rows = con.execute(
+                "SELECT id, approved_ts FROM approvals WHERE signature=? AND status='approved' "
+                "ORDER BY approved_ts ASC",
                 (sig,),
-            ).fetchone()
-            if not row:
-                return False
-            con.execute("UPDATE approvals SET status='consumed' WHERE id=?", (row["id"],))
-            return True
+            ).fetchall()
+            for row in rows:
+                expired = (self.ttl_seconds is not None and row["approved_ts"] is not None
+                           and (now - row["approved_ts"]) > self.ttl_seconds)
+                if expired:
+                    con.execute("UPDATE approvals SET status='expired' WHERE id=?", (row["id"],))
+                    continue
+                con.execute("UPDATE approvals SET status='consumed' WHERE id=?", (row["id"],))
+                return True
+        return False
+
+    def purge(self, older_than_seconds: float) -> int:
+        """Delete consumed/expired rows older than the cutoff; mark stale pending as expired.
+
+        Returns the number of rows deleted. The audit log is never pruned (it is the
+        compliance record); only this ephemeral approval state is.
+        """
+        cutoff = self._clock() - older_than_seconds
+        with self._conn() as con:
+            deleted = con.execute(
+                "DELETE FROM approvals WHERE ts < ? AND status IN ('consumed','expired')", (cutoff,)
+            ).rowcount
+            con.execute("UPDATE approvals SET status='expired' WHERE ts < ? AND status='pending'", (cutoff,))
+        return deleted

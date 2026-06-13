@@ -27,6 +27,8 @@ def main(argv=None) -> None:
     sub.add_parser("approvals", help="list pending human-in-the-loop approvals")
     approve = sub.add_parser("approve", help="approve a pending action by id")
     approve.add_argument("id")
+    gc = sub.add_parser("gc", help="purge stale approvals + rate-limit state (not the audit log)")
+    gc.add_argument("--older-than-days", type=float, default=7)
     sub.add_parser("demo", help="run the example trading agent end-to-end")
 
     args = parser.parse_args(argv)
@@ -97,6 +99,16 @@ def main(argv=None) -> None:
 
         ok = Approvals(cfg.db_path).approve(args.id, by="cli")
         print("approved" if ok else "no such pending approval")
+
+    elif args.cmd == "gc":
+        from sentinel.approvals import Approvals
+        from sentinel.ratelimit import SqliteRateLimiter
+
+        secs = args.older_than_days * 86400
+        removed_approvals = Approvals(cfg.db_path).purge(secs)
+        removed_hits = SqliteRateLimiter(cfg.db_path).purge(secs)
+        print(f"purged {removed_approvals} approval rows + {removed_hits} rate-limit rows "
+              f"(older than {args.older_than_days}d); audit log untouched")
 
     elif args.cmd == "demo":
         path = os.path.join(os.getcwd(), "examples", "trading_agent.py")

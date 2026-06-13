@@ -51,3 +51,24 @@ def test_different_args_need_separate_approval(tmp_path):
     ap.approve(aid, by="x")
     assert ap.consume(call(amount=9999)) is False  # different call, not covered
     assert ap.consume(call(amount=5000)) is True
+
+
+def test_approval_expires_after_ttl(tmp_path):
+    t = {"now": 1000.0}
+    ap = Approvals(str(tmp_path / "a.db"), ttl_seconds=60, clock=lambda: t["now"])
+    c = call(amount=5000)
+    aid = ap.request(c)
+    ap.approve(aid, by="x")
+    t["now"] += 120  # past TTL -> stale approval can't authorize
+    assert ap.consume(c) is False
+
+
+def test_purge_removes_consumed_rows(tmp_path):
+    t = {"now": 1000.0}
+    ap = Approvals(str(tmp_path / "a.db"), clock=lambda: t["now"])
+    c = call(amount=5000)
+    aid = ap.request(c)
+    ap.approve(aid, by="x")
+    ap.consume(c)
+    t["now"] += 10_000
+    assert ap.purge(older_than_seconds=3600) >= 1
