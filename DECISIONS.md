@@ -24,6 +24,13 @@
 **נימוק:** מנגנון ה-interception הוא ההחלטה הארכיטקטונית הכי קשה-להפוך — לא לקבע אותה ב-PRD לפני שמציגים trade-offs.
 **סטטוס:** ✅ `PRD.md` נכתב.
 
-## החלטות פתוחות לנקודות הבאות
-- בחירת stack (שפה / איך מיירטים — proxy vs SDK wrapper vs middleware / DB ל-audit) — **לשאול לפני בחירה** (Phase 2).
-- האם MVP מתמקד בפרוטוקול אחד (MCP) או cross-protocol — לשאול (Phase 1/2).
+## 2026-06-13 · Phase 2 — Stack ו-Interception — **מאושר** ✅
+**החלטה:** Python 3.11+ · interception = **SDK wrapper** מאחורי `Interceptor` interface (MCP-proxy כ-adapter עתידי) · audit = **SQLite + hash-chain** · policy = **YAML** · API = **FastAPI** + dashboard מינימלי · בדיקות = **pytest**.
+**נימוק:** ה-beachhead (סוכנים פיננסיים/MeiroX) משתמש ב-tools של קריאות ישירות, לא MCP — SDK wrapper מכסה אותם, framework-agnostic, ודטרמיניסטי ל-tests-first. עקרונות: default-deny, fail-closed, append-only. ראה `ARCHITECTURE.md`.
+**סטטוס:** ✅ אושר ע"י Itamar. עוברים לבנייה (Phase 3).
+
+## עקרונות אבטחה שנקבעו (מחייבים את כל הקוד)
+- **Fail-closed:** חריגה בליבת ההכרעה → block, לא execute.
+- **Default-deny:** אין כלל מתאים → block.
+- **Tests-first** על policy / kill switch / audit-integrity (קוד קריטי).
+- **Sentinel עצמו = משטח תקיפה** — threat model ב-`ARCHITECTURE.md` §6.
