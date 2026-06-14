@@ -28,7 +28,7 @@ heuristic v1); the compliance mappings are engineering aids, not certification.
 
 Apache-2.0, ~80 tests, `pip install` + a CLI + a small dashboard.
 
-Repo: <YOUR-GITHUB-URL>
+Repo: https://github.com/itamarmeirovichai-source/sentinel
 
 I'd love feedback — especially from anyone running agents in production: what would you
 need before you'd put something like this in front of a real agent?

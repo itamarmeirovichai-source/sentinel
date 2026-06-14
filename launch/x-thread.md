@@ -31,7 +31,7 @@ with zero risk before you let it block anything.
 
 6/
 It's alpha, Apache-2.0, ~80 tests, pip-installable, with a tiny dashboard.
-Repo: <YOUR-GITHUB-URL>
+Repo: https://github.com/itamarmeirovichai-source/sentinel
 
 If you build agents: what would you need before you'd put a layer like this in front of a
 real one? Genuinely asking.

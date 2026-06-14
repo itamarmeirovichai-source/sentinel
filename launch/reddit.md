@@ -24,6 +24,6 @@ legal advice).
 Honest status: it's **alpha**, the injection detector is heuristic v1 (not a silver
 bullet), and I have 0 production users yet — which is exactly why I'm posting.
 
-Repo: <YOUR-GITHUB-URL>
+Repo: https://github.com/itamarmeirovichai-source/sentinel
 
 If you run agents: would you actually use something like this? What's missing for you?
