@@ -12,10 +12,11 @@ cp .env.example .env      # optional; sensible defaults work without it
 ## 1. The end-to-end demo (the headline)
 
 ```bash
-sentinel demo            # or: python examples/trading_agent.py
+sentinel demo            # a GENERIC agent; vertical example: python examples/trading_agent.py
 ```
 
-An autonomous trading agent runs **through** Sentinel. You'll see five scenarios:
+A generic AI agent runs **through** Sentinel (the trading version shows the same controls
+for a financial agent). You'll see the same scenarios either way:
 
 | Scenario | Tool call | What Sentinel does |
 |---|---|---|

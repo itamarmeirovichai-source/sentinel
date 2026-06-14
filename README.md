@@ -2,7 +2,7 @@
 
 **The compliance-grade flight recorder + kill switch for AI agents.**
 
-Sentinel sits between an autonomous AI agent and its tools. Every action is
+Sentinel sits between **any** AI agent (any framework) and its tools. Every action is
 checked against your policy *before* it runs, recorded into a tamper-evident
 audit trail you can replay and export as compliance evidence, and you can stop
 the agent instantly. The point is provability: knowing — and being able to
@@ -54,8 +54,8 @@ cp .env.example .env
 # run the tests (security-critical core is tested first)
 pytest
 
-# run the end-to-end demo (see DEMO.md)
-python examples/trading_agent.py
+# run the end-to-end demo (a generic agent; see DEMO.md)
+python examples/generic_agent.py        # or: sentinel demo
 
 # launch the control API + dashboard
 sentinel serve            # then open http://127.0.0.1:8787
@@ -70,14 +70,24 @@ sentinel serve            # then open http://127.0.0.1:8787
 ```python
 from sentinel import Sentinel
 
-sentinel = Sentinel.from_files(policy="policies/example.yaml", db="data/sentinel.db")
+sentinel = Sentinel.from_files(policy="policies/starter.yaml", db="data/sentinel.db")
 
 @sentinel.guard                      # every call is checked, logged, killable
-def place_order(symbol: str, amount: float): ...
+def send_email(to: str, subject: str, body: str): ...
+
+# …or guard a whole toolset at once:
+tools = sentinel.wrap_all({"send_email": send_email, "search_web": search_web})
 
 # over-policy / killed / suspicious calls raise BlockedError and are recorded;
 # allowed calls run normally and are recorded with their outcome.
 ```
+
+## Works with any agent, any framework
+
+Plain Python functions, LangChain, OpenAI Agents SDK, CrewAI, LlamaIndex, or MCP — guard
+your tools with `@sentinel.guard` / `sentinel.wrap_all(...)`, or use the MCP proxy/server.
+See [INTEGRATIONS.md](INTEGRATIONS.md). The default demo (`sentinel demo`) is a generic
+agent; [`examples/trading_agent.py`](examples/trading_agent.py) is a vertical example.
 
 ## Two interceptors, one core
 
@@ -122,6 +132,7 @@ Install the optional transports with `pip install "agentledger[mcp,otel]"`.
 | [PRD.md](PRD.md) | Product requirements for this MVP |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Components, data flow, threat model |
 | [DECISIONS.md](DECISIONS.md) | Decision log |
+| [INTEGRATIONS.md](INTEGRATIONS.md) | Add Sentinel to any framework (LangChain, OpenAI, CrewAI, MCP, …) |
 | [DEMO.md](DEMO.md) | How to run the end-to-end demo |
 | [ROADMAP.md](ROADMAP.md) | What's next, and the known-limitation → feature map |
 | [SECURITY.md](SECURITY.md) | Design posture, self-check, known limitations |

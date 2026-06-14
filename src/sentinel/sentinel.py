@@ -106,6 +106,13 @@ class Sentinel:
 
         return wrapper
 
+    def wrap_all(self, tools):
+        """Guard many tools at once. Accepts a dict {name: fn} or a list [fn] and returns
+        the same shape with every callable guarded — handy for a whole agent toolset."""
+        if isinstance(tools, dict):
+            return {name: self.guard(fn, tool=name) for name, fn in tools.items()}
+        return [self.guard(fn) for fn in tools]
+
     # --- shared decision + logging (used by both enforce and aenforce) ----
     def _decide(self, call: ToolCall):
         result = self.check(call)

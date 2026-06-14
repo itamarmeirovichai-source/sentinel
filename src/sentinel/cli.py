@@ -152,10 +152,10 @@ def main(argv=None) -> None:
             print(text)
 
     elif args.cmd == "demo":
-        path = os.path.join(os.getcwd(), "examples", "trading_agent.py")
+        path = os.path.join(os.getcwd(), "examples", "generic_agent.py")
         if not os.path.exists(path):
             repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            path = os.path.join(repo_root, "examples", "trading_agent.py")
+            path = os.path.join(repo_root, "examples", "generic_agent.py")
         runpy.run_path(path, run_name="__main__")
 
     else:

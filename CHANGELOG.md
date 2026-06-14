@@ -18,6 +18,7 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 - **MCP proxy** (`MCPProxy`) — second interceptor over the same `enforce()` path; no bypass.
 - **Sentinel-guarded MCP server** (`SentinelMCPServer`) — expose tools over real MCP with enforcement built in (optional `mcp` extra).
 - **Upstream MCP proxy** (`AsyncMCPProxy`) — man-in-the-middle over a live `mcp.ClientSession` (async `aenforce`).
+- **Framework-agnostic by default**: generic `policies/starter.yaml` + a generic demo (`sentinel demo`); `Sentinel.wrap_all()` guards a whole toolset; INTEGRATIONS.md covers plain functions / LangChain / OpenAI Agents / CrewAI / MCP. (Trading is now just a vertical example.)
 
 ### Control plane
 - FastAPI **dashboard** + API: live feed, integrity verify, policy editor, kill switch, approvals.

@@ -79,3 +79,7 @@
 **החלטה:** לפני השקה — (א) תיקון ממצאי pre-launch: XSS בדאשבורד (escaping), disclaimers (alpha/not-legal-advice ב-README + Art.12), retry על כתיבת audit מקבילית, מדיניות disclosure. (ב) "כל מה שחסר לפי החוקים ל-AI": `frameworks.py` — קטלוג של 6 רגולציות אמיתיות (EU AI Act, GDPR, NIST AI RMF, ISO 42001, Colorado AI Act, SEC/FINRA) עם מיפוי **כֵּן** full/partial/none, `sentinel compliance` CLI, ו-COMPLIANCE.md.
 **כנות:** מתוך 27 חובות — רק 1 full, 20 partial, 6 none. Sentinel = שכבת evidence/control, *לא* "הופך אותך ל-compliant". הכל מסומן indicative/not-legal-advice.
 **סטטוס:** ✅ 78 טסטים, ruff נקי. נשאר רק: מילוי איש קשר אבטחה, שם PyPI, push ל-CI — ואז השקה.
+
+## 2026-06-14 · הכללה: לכל סוכן AI, לא רק MeiroX/מסחר
+**החלטה:** Itamar ביקש שזה יהיה לכל סוכן שאנשים בונים עם AI, לא רק הבוט שלו. בוצע: `policies/starter.yaml` גנרי (read/write/destructive/payments/egress/code-exec), `examples/generic_agent.py` כ-demo הראשי (`sentinel demo` מצביע עליו), `Sentinel.wrap_all()` לעטיפת toolset שלם, ו-`INTEGRATIONS.md` (plain/LangChain/OpenAI/CrewAI/LlamaIndex/MCP). default policy ב-Config שונה ל-starter.yaml; trading_agent נשאר כדוגמה vertical (מצמיד example.yaml). README/DEMO/PyPI שם = agentledger.
+**סטטוס:** ✅ 79 טסטים, ruff נקי. שני ה-demos עובדים (גנרי + מסחר).

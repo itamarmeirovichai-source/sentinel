@@ -1,0 +1,38 @@
+# Sentinel STARTER policy — safe defaults for ANY AI agent. Copy and tune to your tools.
+# Evaluation is first-match-wins; anything unmatched hits `default` (deny).
+version: 1
+default: deny
+
+rules:
+  # 1) Read-only / lookup tools are safe.
+  - id: allow-reads
+    match: { tool: ["get_*", "list_*", "read_*", "search_*", "fetch_*", "lookup_*", "query_*"] }
+    action: allow
+
+  # 2) Destructive operations are never allowed.
+  - id: forbid-destructive
+    match: { tool: ["delete_*", "drop_*", "wipe_*", "remove_*", "truncate_*", "rm_*"] }
+    action: block
+
+  # 3) Moving money above a small amount needs a human.
+  - id: approve-large-payments
+    match:
+      tool: ["pay_*", "charge_*", "transfer_*", "refund_*", "place_order", "send_money"]
+      args: { amount: { gt: 100 } }
+    action: require_approval
+
+  # 4) Running code / shell needs a human.
+  - id: approve-code-exec
+    match: { tool: ["run_shell", "run_code", "exec_*", "eval_*", "shell"] }
+    action: require_approval
+
+  # 5) Sending things out (email / messages / webhooks) is allowed but throttled.
+  - id: throttle-egress
+    match: { tool: ["send_email", "send_message", "post_*", "http_post", "webhook_*", "publish_*"] }
+    rate_limit: { max: 10, per_seconds: 60 }
+    action: allow
+
+  # 6) Writes / updates are allowed (tighten per tool as you learn your agent).
+  - id: allow-writes
+    match: { tool: ["write_*", "update_*", "create_*", "set_*", "upsert_*", "save_*"] }
+    action: allow

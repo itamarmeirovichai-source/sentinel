@@ -21,7 +21,7 @@ def load_dotenv(path: str = ".env") -> None:
 @dataclass
 class Config:
     db_path: str = "./data/sentinel.db"
-    policy_path: str = "./policies/example.yaml"
+    policy_path: str = "./policies/starter.yaml"
     api_host: str = "127.0.0.1"
     api_port: int = 8787
     redact_keys: Optional[list[str]] = None
@@ -36,7 +36,7 @@ class Config:
         keys = os.getenv("SENTINEL_REDACT_KEYS")
         return cls(
             db_path=os.getenv("SENTINEL_DB_PATH", "./data/sentinel.db"),
-            policy_path=os.getenv("SENTINEL_POLICY_PATH", "./policies/example.yaml"),
+            policy_path=os.getenv("SENTINEL_POLICY_PATH", "./policies/starter.yaml"),
             api_host=os.getenv("SENTINEL_API_HOST", "127.0.0.1"),
             api_port=int(os.getenv("SENTINEL_API_PORT", "8787")),
             redact_keys=[k.strip() for k in keys.split(",") if k.strip()] if keys else None,

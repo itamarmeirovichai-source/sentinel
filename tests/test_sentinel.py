@@ -228,3 +228,18 @@ def test_two_phase_logging_records_intent_then_outcome(tmp_path):
     assert intent.phase == "intent" and intent.status == Status.EXECUTING.value
     assert outcome.phase == "outcome" and outcome.status == Status.EXECUTED.value
     assert s.audit.verify().ok
+
+
+def test_wrap_all_guards_a_whole_toolset(tmp_path):
+    s = build(tmp_path)
+
+    def get_quote(symbol):
+        return symbol
+
+    def place_order(symbol, amount):
+        return "filled"
+
+    tools = s.wrap_all({"get_quote": get_quote, "place_order": place_order})
+    assert tools["get_quote"]("AAPL") == "AAPL"          # allowed (reads)
+    with pytest.raises(BlockedError):
+        tools["place_order"]("AAPL", amount=1000)         # > 500 -> blocked

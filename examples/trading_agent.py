@@ -27,7 +27,7 @@ PACKAGED_POLICY = os.path.join(os.path.dirname(HERE), "policies", "example.yaml"
 
 def build_sentinel() -> Sentinel:
     cfg = Config.from_env()
-    policy_path = cfg.policy_path if os.path.exists(cfg.policy_path) else PACKAGED_POLICY
+    policy_path = PACKAGED_POLICY  # this vertical demo pins its own trading policy
     detector = Detector(
         baseline_tools=["get_quote", "get_balance", "place_order",
                         "cancel_all_orders", "read_api_secret", "http_post", "get_news"],
