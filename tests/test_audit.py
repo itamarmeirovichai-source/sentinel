@@ -68,3 +68,15 @@ def test_export_is_a_compliance_report(tmp_path):
     assert rep["count"] == 1
     assert rep["records"][0]["compliance"]["eu_ai_act_art12"] is True
     assert "generated_at" in rep
+
+
+def test_two_writers_on_same_db_keep_a_valid_chain(tmp_path):
+    db = str(tmp_path / "a.db")
+    log_a = AuditLog(db)
+    log_b = AuditLog(db)  # independent instance, same DB
+    log_a.append(mk("get_quote"), Decision.ALLOW, "r", "", [], Status.EXECUTED)
+    log_b.append(mk("get_balance"), Decision.ALLOW, "r", "", [], Status.EXECUTED)
+    log_a.append(mk("place_order", amount=10), Decision.BLOCK, "f", "", [], Status.BLOCKED)
+    recs = log_a.records()
+    assert [r.seq for r in recs] == [1, 2, 3]  # contiguous across writers
+    assert log_a.verify().ok                    # chain intact

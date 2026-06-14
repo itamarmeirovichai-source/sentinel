@@ -71,5 +71,7 @@ def art12_report(records, *, verify_ok: bool, generated_at: float,
             "how_to_verify": "sentinel verify",
         },
         "event_count": len(events),
+        "disclaimer": ("Indicative record-keeping aid, not legal advice or a conformity "
+                       "assessment. Verify against the current EU AI Act text and your obligations."),
         "events": events,
     }

@@ -8,9 +8,14 @@ audit trail you can replay and export as compliance evidence, and you can stop
 the agent instantly. The point is provability: knowing — and being able to
 prove — exactly what your agent did.
 
-> Status: **MVP / Phase 3.** This is the narrow wedge of a larger vision (see
+> Status: **MVP / alpha (v0.1).** This is the narrow wedge of a larger vision (see
 > [RESEARCH.md](RESEARCH.md) and [ROADMAP.md](ROADMAP.md)). It is **not** another
 > prompt-injection filter — it leads with deterministic enforcement + provable audit.
+>
+> ⚠️ **Disclaimer.** Experimental; APIs may change; provided "as is", no warranty
+> (Apache-2.0). Compliance mappings (EU AI Act Art. 12, OWASP) are **indicative
+> engineering aids — not legal advice or a certification**. You remain responsible for
+> your own compliance and for reviewing Sentinel before relying on it in high-stakes systems.
 
 ## Why
 

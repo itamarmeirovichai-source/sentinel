@@ -28,6 +28,8 @@ We take that seriously.
 | Sensitive read endpoints lockable | ✅ `SENTINEL_API_PROTECT_READS` gates GET `/api/*` behind the token |
 | Storage concurrency | ✅ WAL + busy_timeout (avoids "database is locked") |
 | Static lint gate | ✅ ruff clean (E,F,W,I,B) in CI |
+| Dashboard XSS | ✅ audit data (tool/args/reason/flags) HTML-escaped before render |
+| Concurrent audit append | ✅ PRIMARY KEY-collision retry keeps the chain valid (single writer recommended) |
 
 ## Known limitations (tracked in [ROADMAP.md](ROADMAP.md))
 
@@ -41,7 +43,17 @@ We take that seriously.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) §6 for the full table (T1–T8).
 
-## Reporting
+## Reporting a vulnerability
 
-This is an MVP / research project. Security issues: open an issue or contact the
-maintainer. Do not include live secrets in reports.
+Please report security issues **privately** — do not open a public issue for an
+unfixed vulnerability.
+
+- Contact: `INSERT-SECURITY-CONTACT` — set this before publishing (a dedicated address,
+  or enable GitHub Security Advisories: repo → Security → "Report a vulnerability").
+- Include the affected version/commit, reproduction steps, and impact. Do **not** include
+  live secrets or customer data.
+- Please allow reasonable time to fix before public disclosure.
+
+Because Sentinel sits on a sensitive control point, the threat model in
+[ARCHITECTURE.md](ARCHITECTURE.md) §6 and the known limitations above are the first
+places to look.

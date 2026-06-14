@@ -79,40 +79,48 @@ class AuditLog:
                phase: str = "event") -> AuditRecord:
         dec = decision if isinstance(decision, Decision) else Decision(str(decision))
         sval = status.value if isinstance(status, Status) else str(status)
-        with self._conn() as con:
-            row = con.execute("SELECT seq, hash FROM audit ORDER BY seq DESC LIMIT 1").fetchone()
-            prev_seq = row["seq"] if row else 0
-            prev_hash = row["hash"] if row else GENESIS
-            rec = AuditRecord(
-                seq=prev_seq + 1,
-                ts=self._clock(),
-                agent_id=call.agent_id,
-                session_id=call.session_id,
-                tool=call.tool,
-                args=redact(call.args, self.redact_keys),
-                decision=dec.value,
-                policy_rule=policy_rule,
-                reason=reason,
-                flags=list(flags),
-                status=sval,
-                error=error,
-                compliance=map_compliance(dec, list(flags)),
-                prev_hash=prev_hash,
-                action_id=action_id,
-                phase=phase,
-            )
-            payload = {f: getattr(rec, f) for f in _FIELDS}
-            rec.hash = _hash(prev_hash, payload)
-            con.execute(
-                "INSERT INTO audit (seq,ts,agent_id,session_id,tool,args,decision,policy_rule,"
-                "reason,flags,status,error,compliance,action_id,phase,prev_hash,hash) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (rec.seq, rec.ts, rec.agent_id, rec.session_id, rec.tool,
-                 json.dumps(rec.args, default=str), rec.decision, rec.policy_rule, rec.reason,
-                 json.dumps(rec.flags), rec.status, rec.error, json.dumps(rec.compliance),
-                 rec.action_id, rec.phase, rec.prev_hash, rec.hash),
-            )
-        return rec
+        # The hash chain is single-writer by nature; if a concurrent writer claims the
+        # next seq first, the PRIMARY KEY collision is caught and we retry off a fresh head.
+        for attempt in range(8):
+            try:
+                with self._conn() as con:
+                    row = con.execute("SELECT seq, hash FROM audit ORDER BY seq DESC LIMIT 1").fetchone()
+                    prev_seq = row["seq"] if row else 0
+                    prev_hash = row["hash"] if row else GENESIS
+                    rec = AuditRecord(
+                        seq=prev_seq + 1,
+                        ts=self._clock(),
+                        agent_id=call.agent_id,
+                        session_id=call.session_id,
+                        tool=call.tool,
+                        args=redact(call.args, self.redact_keys),
+                        decision=dec.value,
+                        policy_rule=policy_rule,
+                        reason=reason,
+                        flags=list(flags),
+                        status=sval,
+                        error=error,
+                        compliance=map_compliance(dec, list(flags)),
+                        prev_hash=prev_hash,
+                        action_id=action_id,
+                        phase=phase,
+                    )
+                    payload = {f: getattr(rec, f) for f in _FIELDS}
+                    rec.hash = _hash(prev_hash, payload)
+                    con.execute(
+                        "INSERT INTO audit (seq,ts,agent_id,session_id,tool,args,decision,policy_rule,"
+                        "reason,flags,status,error,compliance,action_id,phase,prev_hash,hash) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (rec.seq, rec.ts, rec.agent_id, rec.session_id, rec.tool,
+                         json.dumps(rec.args, default=str), rec.decision, rec.policy_rule, rec.reason,
+                         json.dumps(rec.flags), rec.status, rec.error, json.dumps(rec.compliance),
+                         rec.action_id, rec.phase, rec.prev_hash, rec.hash),
+                    )
+                return rec
+            except sqlite3.IntegrityError:
+                if attempt == 7:
+                    raise
+        raise RuntimeError("unreachable")  # pragma: no cover
 
     def _row_to_record(self, row: sqlite3.Row) -> AuditRecord:
         return AuditRecord(

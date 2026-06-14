@@ -101,6 +101,13 @@
 const $ = (id) => document.getElementById(id);
 let killed = false;
 
+// Audit data (tool names, args, reasons) is attacker-influenceable via the agent, so
+// every interpolated value is HTML-escaped before it reaches innerHTML (anti-XSS).
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function saveToken() { localStorage.setItem('sentinel_token', $('token').value); }
 function authHeaders() {
   const t = localStorage.getItem('sentinel_token') || '';
@@ -126,21 +133,21 @@ async function refresh() {
     const rows = await (await fetch('/api/actions?limit=50', {headers: authHeaders()})).json();
     $('feed').innerHTML = rows.map(r => `
       <tr>
-        <td>${r.seq}</td>
+        <td>${Number(r.seq)}</td>
         <td>${new Date(r.ts*1000).toLocaleTimeString()}</td>
-        <td><code>${r.tool}</code> <span class="muted">${fmtArgs(r.args)}</span></td>
-        <td class="${r.decision}">${r.decision}</td>
-        <td>${r.status}</td>
-        <td class="muted">${r.policy_rule || '—'} · ${r.reason}</td>
-        <td class="flags">${(r.flags||[]).join('<br>')}</td>
+        <td><code>${esc(r.tool)}</code> <span class="muted">${esc(fmtArgs(r.args))}</span></td>
+        <td class="${esc(r.decision)}">${esc(r.decision)}</td>
+        <td>${esc(r.status)}</td>
+        <td class="muted">${esc(r.policy_rule || '—')} · ${esc(r.reason)}</td>
+        <td class="flags">${(r.flags||[]).map(esc).join('<br>')}</td>
       </tr>`).join('');
 
     const appr = await (await fetch('/api/approvals', {headers: authHeaders()})).json();
     $('apprCount').textContent = appr.length ? `(${appr.length})` : '';
     $('approvals').innerHTML = appr.length ? appr.map(a => `
       <div class="appr">
-        <span><code>${a.tool}</code> <span class="muted">${fmtArgs(a.args)} · ${a.agent_id}</span></span>
-        <button class="go" onclick="approve('${a.id}')">APPROVE</button>
+        <span><code>${esc(a.tool)}</code> <span class="muted">${esc(fmtArgs(a.args))} · ${esc(a.agent_id)}</span></span>
+        <button class="go" onclick="approve('${esc(a.id)}')">APPROVE</button>
       </div>`).join('') : '<span class="muted">none</span>';
   } catch (e) { /* server not up yet */ }
 }
