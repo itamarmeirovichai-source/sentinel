@@ -29,6 +29,10 @@ def main(argv=None) -> None:
     approve.add_argument("id")
     gc = sub.add_parser("gc", help="purge stale approvals + rate-limit state (not the audit log)")
     gc.add_argument("--older-than-days", type=float, default=7)
+    comp = sub.add_parser("compliance", help="map Sentinel to AI/data regulations (indicative)")
+    comp.add_argument("--framework", default=None, help="framework key (e.g. eu_ai_act, gdpr, sec_finra)")
+    comp.add_argument("--all", action="store_true", help="coverage summary across all frameworks")
+    comp.add_argument("--out", default=None, help="write the report to this file")
     sub.add_parser("demo", help="run the example trading agent end-to-end")
 
     args = parser.parse_args(argv)
@@ -119,6 +123,33 @@ def main(argv=None) -> None:
         removed_hits = SqliteRateLimiter(cfg.db_path).purge(secs)
         print(f"purged {removed_approvals} approval rows + {removed_hits} rate-limit rows "
               f"(older than {args.older_than_days}d); audit log untouched")
+
+    elif args.cmd == "compliance":
+        import time as _time
+
+        from sentinel import frameworks
+
+        if args.all:
+            out = frameworks.coverage_summary()
+        elif args.framework:
+            from sentinel.audit import AuditLog
+
+            log = AuditLog(cfg.db_path)
+            out = frameworks.framework_report(
+                args.framework, records=log.records(), verify_ok=log.verify().ok,
+                generated_at=_time.time(),
+                system_name=os.getenv("SENTINEL_SYSTEM_NAME", "unspecified AI system"),
+                provider=os.getenv("SENTINEL_PROVIDER", "unspecified"))
+        else:
+            out = {"frameworks": frameworks.list_frameworks(),
+                   "hint": "use --framework <key> for the full mapping, or --all for a coverage summary"}
+        text = json.dumps(out, indent=2, default=str)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                fh.write(text)
+            print(f"wrote {args.out}")
+        else:
+            print(text)
 
     elif args.cmd == "demo":
         path = os.path.join(os.getcwd(), "examples", "trading_agent.py")

@@ -29,9 +29,11 @@ MVP of the audit/flight-recorder wedge, plus first hardening pass.
 ### Tooling
 - CLI: `serve | verify | export [--format json|otel] | kill | unkill | approvals | approve | demo`.
 - **Retention**: approval TTL + `sentinel gc` purges stale approvals / rate-limit state (audit log untouched).
+- **Multi-framework compliance mapping** (`sentinel compliance`): EU AI Act, GDPR, NIST AI RMF, ISO 42001, Colorado AI Act, SEC/FINRA — honest full/partial/none coverage (COMPLIANCE.md).
 - **EU AI Act Art.12 report** (`export --format art12`); OpenTelemetry GenAI export (JSON spans + real SDK emission).
 - **PyPI release automation** (Trusted Publishing) — see PUBLISHING.md.
 - Optional extras: `pip install "sentinel[mcp,otel]"`. Clean wheel/sdist build.
+- Pre-launch security: dashboard HTML-escaping (anti-XSS), disclaimers (alpha / not legal advice), concurrency-safe audit append.
 - CI (GitHub Actions, py3.11–3.13) with a ruff lint gate. Concurrency-safe SQLite (WAL + busy_timeout). Apache-2.0.
 
-71 tests passing.
+78 tests passing.

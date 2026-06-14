@@ -74,3 +74,8 @@
 - **EU AI Act Art.12 report** רציני (`export --format art12`).
 - **release ל-PyPI** (Trusted Publishing) + PUBLISHING.md — מוכן, **לא בוצע** (דורש חשבון PyPI; פעולה כלפי-חוץ).
 **סטטוס:** ✅ 71 טסטים, ruff נקי. נשאר: פרסום (שלך), design partner (אנושי), MeiroX (הוחרג מפורשות).
+
+## 2026-06-13 · Pre-launch hardening + שכבת compliance רב-מסגרתית
+**החלטה:** לפני השקה — (א) תיקון ממצאי pre-launch: XSS בדאשבורד (escaping), disclaimers (alpha/not-legal-advice ב-README + Art.12), retry על כתיבת audit מקבילית, מדיניות disclosure. (ב) "כל מה שחסר לפי החוקים ל-AI": `frameworks.py` — קטלוג של 6 רגולציות אמיתיות (EU AI Act, GDPR, NIST AI RMF, ISO 42001, Colorado AI Act, SEC/FINRA) עם מיפוי **כֵּן** full/partial/none, `sentinel compliance` CLI, ו-COMPLIANCE.md.
+**כנות:** מתוך 27 חובות — רק 1 full, 20 partial, 6 none. Sentinel = שכבת evidence/control, *לא* "הופך אותך ל-compliant". הכל מסומן indicative/not-legal-advice.
+**סטטוס:** ✅ 78 טסטים, ruff נקי. נשאר רק: מילוי איש קשר אבטחה, שם PyPI, push ל-CI — ואז השקה.

@@ -50,3 +50,7 @@ select = ["E", "F", "W", "I", "B"]
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI relies on calls (Body/Depends/Header/Query) in argument defaults.
 extend-immutable-calls = ["fastapi.Body", "fastapi.Depends", "fastapi.Header", "fastapi.Query"]
+
+[tool.ruff.lint.per-file-ignores]
+# Regulation catalog: long, human-readable legal requirement strings — wrapping hurts readability.
+"src/sentinel/frameworks.py" = ["E501"]

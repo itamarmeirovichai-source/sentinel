@@ -102,8 +102,10 @@ Install the optional transports with `pip install "sentinel[mcp,otel]"`.
   dashboard or `sentinel approve <id>`, and the next identical call runs exactly once.
 - **Interop** — `sentinel export --format otel` emits OpenTelemetry GenAI spans
   (`gen_ai.*`) for Langfuse / Datadog / any OTel backend.
-- **Compliance** — `sentinel export --format art12` produces an EU AI Act Article 12
-  record-keeping report (system identity, logging period, retention, tamper-evidence).
+- **Compliance** — `sentinel compliance --all` maps Sentinel to EU AI Act, GDPR, NIST AI
+  RMF, ISO 42001, Colorado AI Act, and SEC/FINRA with honest full/partial/none coverage
+  ([COMPLIANCE.md](COMPLIANCE.md)); `sentinel export --format art12` produces an EU AI Act
+  Article 12 record-keeping report.
 - **Housekeeping** — `sentinel gc` purges stale approvals / rate-limit state (never the audit log).
 
 ## Documents
@@ -117,6 +119,7 @@ Install the optional transports with `pip install "sentinel[mcp,otel]"`.
 | [DEMO.md](DEMO.md) | How to run the end-to-end demo |
 | [ROADMAP.md](ROADMAP.md) | What's next, and the known-limitation → feature map |
 | [SECURITY.md](SECURITY.md) | Design posture, self-check, known limitations |
+| [COMPLIANCE.md](COMPLIANCE.md) | Mapping to AI/data law (EU AI Act, GDPR, NIST, ISO 42001, Colorado, SEC/FINRA) |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 
 ## License
