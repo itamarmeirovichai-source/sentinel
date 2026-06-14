@@ -48,8 +48,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) §6 for the full table (T1–T8).
 Please report security issues **privately** — do not open a public issue for an
 unfixed vulnerability.
 
-- Contact: `INSERT-SECURITY-CONTACT` — set this before publishing (a dedicated address,
-  or enable GitHub Security Advisories: repo → Security → "Report a vulnerability").
+- **Preferred:** GitHub private vulnerability reporting — repo → **Security** →
+  "Report a vulnerability" (enable it once under Settings → Code security). Keeps reports
+  private with no public email exposed.
 - Include the affected version/commit, reproduction steps, and impact. Do **not** include
   live secrets or customer data.
 - Please allow reasonable time to fix before public disclosure.
