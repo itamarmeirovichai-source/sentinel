@@ -4,17 +4,17 @@ The wheel/sdist build is verified (a clean-venv install works). Publishing is th
 remaining step, and it needs **your** PyPI account — so it is intentionally not automated
 to run without you. Two ways:
 
-## ⚠️ Pre-flight: the name
+## The name (resolved)
 
-The distribution name in `pyproject.toml` is `sentinel`, which is **likely already taken
-on PyPI**. Check <https://pypi.org/project/sentinel/>. If taken, rename the *distribution*
-(keep the import name `sentinel`):
+The PyPI distribution name is **`agentledger`**. `sentinel`, `agent-sentinel`,
+`sentinel-agent`, and `agentwarden` are all already taken (several by AI-agent-security
+projects). The **brand stays "Sentinel"** and the import name + CLI are still `sentinel`:
 
-```toml
-# pyproject.toml
-[project]
-name = "agent-sentinel"   # or another free name; `import sentinel` stays the same
 ```
+pip install agentledger   →   import sentinel   ·   sentinel --help
+```
+
+Verified free 2026-06-13. (If you ever want brand == package, it's a mechanical rename of `src/sentinel`.)
 
 ## Option A — Trusted Publishing (recommended, no tokens)
 
@@ -42,5 +42,5 @@ twine upload dist/*        # username: __token__   password: <your pypi token>
 
 ## After publishing
 
-`pip install agent-sentinel` (or `sentinel` if the name was free) should work anywhere,
-and `sentinel --help` is on PATH. Optional extras: `pip install "agent-sentinel[mcp,otel]"`.
+`pip install agentledger` should work anywhere, and `sentinel --help` is on PATH.
+Optional extras: `pip install "agentledger[mcp,otel]"`.
