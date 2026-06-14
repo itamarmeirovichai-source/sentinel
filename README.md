@@ -133,6 +133,7 @@ Install the optional transports with `pip install "agentledger[mcp,otel]"`.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Components, data flow, threat model |
 | [DECISIONS.md](DECISIONS.md) | Decision log |
 | [INTEGRATIONS.md](INTEGRATIONS.md) | Add Sentinel to any framework (LangChain, OpenAI, CrewAI, MCP, …) |
+| [LAUNCH.md](LAUNCH.md) | The honest go-to-market plan + ready-to-post launch assets (`launch/`, `site/`) |
 | [DEMO.md](DEMO.md) | How to run the end-to-end demo |
 | [ROADMAP.md](ROADMAP.md) | What's next, and the known-limitation → feature map |
 | [SECURITY.md](SECURITY.md) | Design posture, self-check, known limitations |
