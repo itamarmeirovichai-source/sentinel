@@ -14,6 +14,7 @@ venv/
 dist/
 build/
 *.log
+.wrangler/
 
 # Local audit/data stores (do not commit runtime data)
 *.db
