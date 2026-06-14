@@ -73,3 +73,17 @@ The dashboard polls the same audit DB, so:
 > Note: the live dashboard couldn't be auto-screenshotted here because the preview
 > sandbox blocks the project's `.venv`; it runs fine under plain `sentinel serve`,
 > and its endpoints are covered by `tests/test_api.py`.
+
+## 5. Measure the overhead
+
+```bash
+python examples/benchmark.py    # ~0.4 ms/call on a dev laptop (incl. 2 durable audit writes)
+```
+
+## 6. See the compliance mapping
+
+```bash
+sentinel compliance --all                  # full/partial/none across 6 regulations
+sentinel compliance --framework eu_ai_act  # mapping + your audit evidence
+```
+

@@ -107,6 +107,8 @@ Install the optional transports with `pip install "sentinel[mcp,otel]"`.
   ([COMPLIANCE.md](COMPLIANCE.md)); `sentinel export --format art12` produces an EU AI Act
   Article 12 record-keeping report.
 - **Housekeeping** — `sentinel gc` purges stale approvals / rate-limit state (never the audit log).
+- **Overhead** — ~0.4 ms per guarded call on a dev laptop (policy + detector + two durable
+  audit writes), well under the 20 ms target. Reproduce: `python examples/benchmark.py`.
 
 ## Documents
 

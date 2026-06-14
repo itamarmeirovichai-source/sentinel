@@ -87,7 +87,7 @@ Sentinel יושב בין סוכן AI ל-tools שלו, **אוכף מדיניות*
 |---|---|
 | E2E demo | 4 התרחישים עוברים, מתועד ב-`DEMO.md` |
 | Audit integrity | tampering מזוהה 100% ע"י `verify` |
-| Latency overhead per call | מדיד ומדווח (יעד אינדיקטיבי: < ~20ms ב-in-process; proxy mode מדווח בנפרד) |
+| Latency overhead per call | ✅ נמדד ~0.4ms/call (policy+detector+2 audit writes), הרבה מתחת ליעד 20ms — `examples/benchmark.py` |
 | Test coverage | ליבה קריטית (policy/kill/audit) מכוסה; כל הטסטים עוברים |
 
 ## 10. סיכונים ברמת ה-PRD

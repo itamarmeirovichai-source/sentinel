@@ -17,7 +17,11 @@ build/
 
 # Local audit/data stores (do not commit runtime data)
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
 *.sqlite3
 data/
 
