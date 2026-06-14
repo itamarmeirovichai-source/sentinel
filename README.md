@@ -1,5 +1,9 @@
 # Sentinel
 
+[![CI](https://github.com/itamarmeirovichai-source/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/itamarmeirovichai-source/sentinel/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+
 **The compliance-grade flight recorder + kill switch for AI agents.**
 
 Sentinel sits between **any** AI agent (any framework) and its tools. Every action is
