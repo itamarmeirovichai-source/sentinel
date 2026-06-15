@@ -64,7 +64,7 @@ from sentinel import AsyncMCPProxy
 proxy = AsyncMCPProxy(sentinel, session)        # session = an mcp.ClientSession
 await proxy.call_tool("search", {"q": "..."})   # enforced, then forwarded upstream
 ```
-Install the MCP extra: `pip install "agentledger[mcp]"`.
+Install the MCP extra: `pip install "guardledger[mcp]"`.
 
 ## Multi-agent / per-agent control
 

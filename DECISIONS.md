@@ -81,5 +81,5 @@
 **סטטוס:** ✅ 78 טסטים, ruff נקי. נשאר רק: מילוי איש קשר אבטחה, שם PyPI, push ל-CI — ואז השקה.
 
 ## 2026-06-14 · הכללה: לכל סוכן AI, לא רק MeiroX/מסחר
-**החלטה:** Itamar ביקש שזה יהיה לכל סוכן שאנשים בונים עם AI, לא רק הבוט שלו. בוצע: `policies/starter.yaml` גנרי (read/write/destructive/payments/egress/code-exec), `examples/generic_agent.py` כ-demo הראשי (`sentinel demo` מצביע עליו), `Sentinel.wrap_all()` לעטיפת toolset שלם, ו-`INTEGRATIONS.md` (plain/LangChain/OpenAI/CrewAI/LlamaIndex/MCP). default policy ב-Config שונה ל-starter.yaml; trading_agent נשאר כדוגמה vertical (מצמיד example.yaml). README/DEMO/PyPI שם = agentledger.
+**החלטה:** Itamar ביקש שזה יהיה לכל סוכן שאנשים בונים עם AI, לא רק הבוט שלו. בוצע: `policies/starter.yaml` גנרי (read/write/destructive/payments/egress/code-exec), `examples/generic_agent.py` כ-demo הראשי (`sentinel demo` מצביע עליו), `Sentinel.wrap_all()` לעטיפת toolset שלם, ו-`INTEGRATIONS.md` (plain/LangChain/OpenAI/CrewAI/LlamaIndex/MCP). default policy ב-Config שונה ל-starter.yaml; trading_agent נשאר כדוגמה vertical (מצמיד example.yaml). README/DEMO/PyPI שם = guardledger.
 **סטטוס:** ✅ 79 טסטים, ruff נקי. שני ה-demos עובדים (גנרי + מסחר).

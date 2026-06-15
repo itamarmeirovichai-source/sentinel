@@ -1,5 +1,5 @@
 [project]
-name = "agentledger"
+name = "guardledger"
 version = "0.1.0"
 description = "Sentinel — compliance-grade flight recorder + kill switch for AI agents"
 readme = "README.md"

@@ -66,8 +66,8 @@ sentinel serve            # then open http://127.0.0.1:8787
 ```
 
 > Shortcut: `make install && make test && make demo`.
-> On PyPI the package is **`agentledger`** (the `sentinel` handle is taken); the import
-> name and CLI stay `sentinel` — `pip install agentledger` → `import sentinel`.
+> On PyPI the package is **`guardledger`** (the `sentinel` handle is taken); the import
+> name and CLI stay `sentinel` — `pip install guardledger` → `import sentinel`.
 
 ## Usage sketch
 
@@ -107,7 +107,7 @@ server = SentinelMCPServer(sentinel)                  # OR expose your own tools
 server.add_tool("get_quote", get_quote)               #    with enforcement built in
 ```
 
-Install the optional transports with `pip install "agentledger[mcp,otel]"`.
+Install the optional transports with `pip install "guardledger[mcp,otel]"`.
 
 ## Operating it
 

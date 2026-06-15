@@ -6,12 +6,12 @@ to run without you. Two ways:
 
 ## The name (resolved)
 
-The PyPI distribution name is **`agentledger`**. `sentinel`, `agent-sentinel`,
+The PyPI distribution name is **`guardledger`**. `sentinel`, `agent-sentinel`,
 `sentinel-agent`, and `agentwarden` are all already taken (several by AI-agent-security
 projects). The **brand stays "Sentinel"** and the import name + CLI are still `sentinel`:
 
 ```
-pip install agentledger   →   import sentinel   ·   sentinel --help
+pip install guardledger   →   import sentinel   ·   sentinel --help
 ```
 
 Verified free 2026-06-13. (If you ever want brand == package, it's a mechanical rename of `src/sentinel`.)
@@ -42,5 +42,5 @@ twine upload dist/*        # username: __token__   password: <your pypi token>
 
 ## After publishing
 
-`pip install agentledger` should work anywhere, and `sentinel --help` is on PATH.
-Optional extras: `pip install "agentledger[mcp,otel]"`.
+`pip install guardledger` should work anywhere, and `sentinel --help` is on PATH.
+Optional extras: `pip install "guardledger[mcp,otel]"`.

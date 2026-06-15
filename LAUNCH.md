@@ -52,7 +52,7 @@ Be honest with yourself about the **[YOU]** items — they are the actual work n
    ```
 5. **[YOU]** Create a **PyPI** account, set up Trusted Publishing (see PUBLISHING.md), then:
    ```bash
-   git tag v0.1.0 && git push origin v0.1.0     # release.yml publishes `agentledger`
+   git tag v0.1.0 && git push origin v0.1.0     # release.yml publishes `guardledger`
    ```
 6. **[READY]** Landing page in `site/index.html`. **[YOU]** deploy it to Cloudflare Pages
    (your existing stack) and point a domain at it.
