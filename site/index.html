@@ -25,6 +25,13 @@
   .hero p{font-size:19px;color:var(--muted);max-width:680px;margin:0 auto 28px}
   .pillrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
   .pill{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .install{display:inline-flex;align-items:center;gap:10px;margin:18px auto 0;cursor:pointer;
+           background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:11px 18px;
+           font:14px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--fg)}
+  .install:hover{border-color:var(--blue)}
+  .install .dollar{color:var(--green)}
+  .install .copyhint{font-size:11px;color:var(--muted);border-left:1px solid var(--line);padding-left:10px}
+  .install.copied .copyhint{color:var(--green)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:24px 0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
   .card h3{margin:0 0 8px;font-size:16px}
@@ -62,6 +69,10 @@
   <div>
     <a class="btn primary" href="https://github.com/itamarmeirovichai-source/sentinel">Get started →</a>
     &nbsp;<a class="btn" href="https://github.com/itamarmeirovichai-source/sentinel">Read the docs</a>
+  </div>
+  <div class="install" title="Copy"
+       onclick="navigator.clipboard&&navigator.clipboard.writeText('pip install guardledger');var h=this.querySelector('.copyhint');if(h){h.textContent='copied ✓';}this.classList.add('copied')">
+    <span class="dollar">$</span><span>pip install guardledger</span><span class="copyhint">click to copy</span>
   </div>
   <div class="pillrow">
     <span class="pill">Apache-2.0</span><span class="pill">framework-agnostic</span>
